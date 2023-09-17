@@ -85,6 +85,10 @@ namespace analyticRT
         // Set the subtraction location for the dispersion relation
         inline void set_subtraction(double s_sub, double val){ _sSUB = s_sub; _alphaSUB = val; };
 
+        // Many models can form iterative solutions between real and imaginary part
+        // here you can set how many iterations to do
+        inline void max_iteractions(int x){ _Niters = x; };
+
         // Output the trajectory from evaluating dispersion relation
         complex evaluate(double s);
 
@@ -127,6 +131,9 @@ namespace analyticRT
 
         // Number of free parameters
         int _Npars  = 0;
+
+        // Maximum number of iterations to calculate
+        int _Niters = 5;
 
         // Some flag to change model options
         int _option = 0, _debug = 0;

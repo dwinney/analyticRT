@@ -55,6 +55,8 @@ namespace analyticRT
 
     double raw_trajectory::width(double s)
     {
+        if (s <= _sRHC) return 0.;
+
         auto f = [&](double x)
         {
             return real_part(x); 

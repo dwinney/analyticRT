@@ -19,31 +19,40 @@ namespace analyticRT
 
     inline std::vector<plot> isovector_plots(plotter & plotter)
     {
-        data_set isovectors = isovector_spectrum();
+        data_set rhos = rho_spectrum();
+        data_set as   = a_spectrum();
 
         plot re = plotter.new_plot();
 
-        std::vector<double>  s = square_elementwise(isovectors._x);
-        std::vector<double> ds = 2.*multiply_elementwise(isovectors._x, isovectors._dx);
-        std::vector<double>  J = isovectors._y;
-        std::vector<double> dJ = isovectors._dy;
+        std::vector<double> r_s  = square_elementwise(rhos._x);
+        std::vector<double> r_ds = 2.*multiply_elementwise(rhos._x, rhos._dx);
+        std::vector<double> r_J  = rhos._y;
+        std::vector<double> r_dJ = rhos._dy;
+        re.add_data({r_s, r_ds}, {r_J, r_dJ}, jpacColor::Orange);
 
-        re.add_data({s, ds}, {J, dJ}, jpacColor::Orange);
-        re.set_ranges({-2, 6.5}, {-1.5, 6.5});
-        re.set_labels("#it{s} [GeV^{2}]", "Re #alpha(#it{s})");
+        std::vector<double> a_s  = square_elementwise(as._x);
+        std::vector<double> a_ds = 2.*multiply_elementwise(as._x, as._dx);
+        std::vector<double> a_J  = as._y;
+        std::vector<double> a_dJ = as._dy;
+        re.add_data({a_s, a_ds}, {a_J, a_dJ}, jpacColor::Orange);
+
+        re.set_ranges({-2, 7.5}, {-1.5, 8.});
+        re.set_labels("#it{s} [GeV^{2}]", "#alpha(#it{s})");
         re.add_vertical(  0, {kBlack, kSolid});
         re.add_horizontal(0, {kBlack, kSolid});
 
         plot gam = plotter.new_plot();
 
-        std::vector<double>  gamma = isovectors._z;
-        std::vector<double> dgamma = isovectors._dz;
+        std::vector<double> r_gamma  = rhos._z;
+        std::vector<double> r_dgamma = rhos._dz;
+        gam.add_data({r_s, r_ds}, {r_gamma, r_dgamma}, jpacColor::Orange);
 
-        gam.add_data({s, ds}, {gamma, dgamma}, jpacColor::Orange);
-        gam.set_ranges({-2, 6.5}, {-0.05, 0.7});
-        gam.set_labels("#it{s} [GeV^{2}]", "#Gamma(#it{s})");
-        gam.add_vertical(  0, {kBlack, kSolid});
-        gam.add_horizontal(0, {kBlack, kSolid});
+        std::vector<double> a_gamma  = as._z;
+        std::vector<double> a_dgamma = as._dz;
+        gam.add_data({a_s, a_ds}, {a_gamma, a_dgamma}, jpacColor::Orange);
+
+        gam.set_ranges({0., 7.5}, {0., 0.8});
+        gam.set_labels("#it{s} [GeV^{2}]", "#Gamma(#it{s})  [GeV]");
 
         return {re, gam};
     };

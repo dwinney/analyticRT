@@ -131,6 +131,8 @@ namespace analyticRT
         // -----------------------------------------------------------------------
         // Methods to add curves to your plot
 
+        inline void set_curve_points(int N){ _Npoints = N; };
+
         // Basic function which uses the raw vectors and a string id
         void add_curve(std::vector<double> x, std::vector<double> fx, entry_style style);
         void add_curve(std::vector<double> x, std::vector<double> fx, std::string id = "");

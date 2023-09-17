@@ -110,6 +110,19 @@ namespace analyticRT
     {
         return lhs + (-rhs);
     };
+
+    inline std::vector<double> multiply_elementwise(std::vector<double> in1, std::vector<double> in2)
+    {
+        if (in1.size() != in2.size()) warning("multiply_elementwise()", "Input vectors not the same size!");
+
+        std::vector<double> out;
+        for (int i = 0; i < in1.size(); i++)
+        {
+            out.push_back(in1[i]*in2[i]);
+        }
+        return out;
+    };
+    inline std::vector<double> square_elementwise(std::vector<double> in){ return multiply_elementwise(in, in); };
 };
 
 #endif

@@ -120,16 +120,7 @@ namespace analyticRT
         // Methods to add data points to your plot
 
         // Convert a data_set object to a plot_entry
-        void add_data(data_set data);
-
-        // This second function can be used if you want the data_set to have
-        // a different string id in the legend than the one saved in the data_set
-        inline void add_data(data_set data, std::string different_id)
-        {
-            data_set copy(data);
-            copy._id = different_id;
-            add_data(copy);
-        };
+        void add_data(std::array<std::vector<double>,2> x, std::array<std::vector<double>,2> y, jpacColor color = jpacColor::DarkGrey);
 
         // Add a small offset to change the running color index
         inline void color_offset(unsigned n)
@@ -163,11 +154,20 @@ namespace analyticRT
 
         inline void add_vertical(double x_val, std::array<int, 2> style = {kBlack, kDashed})
         {
-            vertical new_vert;
-            new_vert._xvalue    = x_val;
+            line new_vert;
+            new_vert._value    = x_val;
             new_vert._color     = style[0];
             new_vert._linestyle = style[1];   
-            _lines.push_back(new_vert);
+            _vlines.push_back(new_vert);
+        };
+
+        inline void add_horizontal(double y_val, std::array<int, 2> style = {kBlack, kDashed})
+        {
+            line new_horiz;
+            new_horiz._value    = y_val;
+            new_horiz._color     = style[0];
+            new_horiz._linestyle = style[1];   
+            _hlines.push_back(new_horiz);
         };
 
         // -----------------------------------------------------------------------
@@ -327,14 +327,14 @@ namespace analyticRT
         // ------------------------------------------------------------------------
         // LINE MANAGEMENT
 
-        struct vertical 
+        struct line
         {
-            double _xvalue = 0;
+            double _value = 0;
             int _color     = kBlack;
-            int _linestyle = kDashed;
+            int _linestyle = kSolid;
         };
 
-        std::vector<vertical> _lines;
+        std::vector<line> _vlines, _hlines;
     };
 };
 

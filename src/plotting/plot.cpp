@@ -80,7 +80,7 @@ namespace analyticRT
         mg->GetYaxis()->CenterTitle(true);
         _canvas->Modified();
 
-        double ylow, yhigh;
+        double ylow, yhigh, xlow, xhigh;
         if (_customranges)
         {
             mg->GetXaxis()->SetLimits(   _xbounds[0], _xbounds[1]);
@@ -88,15 +88,25 @@ namespace analyticRT
             mg->SetMinimum(_ybounds[0]);
             mg->SetMaximum(_ybounds[1]);
             ylow = _ybounds[0]; yhigh = _ybounds[1];
+            xlow = _xbounds[0]; xhigh = _xbounds[1];
         };
 
-        for (auto line : _lines)
+        for (auto vline : _vlines)
         {
-            auto vert = new TLine(line._xvalue, ylow, line._xvalue, yhigh);
-            vert->SetLineWidth(plot_entry::_default_linewidth);
-            vert->SetLineColorAlpha(line._color, 0.7);
-            vert->SetLineStyle(line._linestyle);
+            auto vert = new TLine(vline._value, ylow, vline._value, yhigh);
+            vert->SetLineWidth(0.7*plot_entry::_default_linewidth);
+            vert->SetLineStyle(vline._linestyle);
+            vert->SetLineColorAlpha(vline._color, 0.7);
             vert->Draw();
+        }
+
+        for (auto hline : _hlines)
+        {
+            auto hori = new TLine(xlow, hline._value, xhigh, hline._value);
+            hori->SetLineWidth(0.7*plot_entry::_default_linewidth);
+            hori->SetLineStyle(hline._linestyle);
+            hori->SetLineColorAlpha(hline._color, 0.7);
+            hori->Draw();
         }
 
     };
@@ -104,19 +114,18 @@ namespace analyticRT
     // ---------------------------------------------------------------------------
     // Convert data_set and amplitude easily into plot_entries
 
-    void plot::add_data(data_set data)
+    void plot::add_data(std::array<std::vector<double>,2> vx, std::array<std::vector<double>,2> vy, jpacColor color)
     {
         double *x, *y, *dx, *dy;
-        x  = &(data._x[0]);        y  = &(data._y[0]);
-        dx = &(data._dx[0]);      dy  = &(data._dy[0]);
-        TGraph *graph = new TGraphErrors(data._N, x, y, dx, dy);
+        x  = &(vx[0][0]);        y  = &(vy[0][0]);
+        dx = &(vx[1][0]);       dy  = &(vy[1][0]);
+        TGraph *graph = new TGraphErrors(vx[0].size(), x, y, dx, dy);
 
         entry_style style;
-        style._label = data._id;
         style._style = 20 + _Ndata;
-        style._color = jpacColor::DarkGrey;
+        style._color = color;
         style._draw_opt = "P";
-        style._add_to_legend = data._add_to_legend;
+        style._add_to_legend = false;
 
         _Ndata++;
         _Nlegend++;

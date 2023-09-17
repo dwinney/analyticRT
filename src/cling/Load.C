@@ -22,7 +22,7 @@ void Load()
 
     // Headers
     TString core = main_dir + "/src/core"; 
-    TString phys = main_dir + "/physics";
+    TString phys = main_dir + "/models";
     TString data = main_dir + "/data";
 
     if (!gSystem->AccessPathName(lib.Data()))

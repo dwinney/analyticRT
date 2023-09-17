@@ -106,27 +106,10 @@ namespace analyticRT
 
     void plot::add_data(data_set data)
     {
-        double *x, *y, *xl, *xh, *yl, *yh;
-        switch (data._type)
-        {
-            case integrated_data: 
-            {
-                x  = &(data._w[0]);        y  = &(data._obs[0]);
-                xl = &(data._werr[0][0]);  xh = &(data._werr[1][0]);
-                yl = &(data._obserr[0]);   yh = &(data._obserr[0]);
-                break;
-            };
-            case differential_data: 
-            {
-                x  = &(data._t[0]);        y  = &(data._obs[0]);
-                xl = &(data._terr[0][0]);  xh = &(data._terr[1][0]);
-                yl = &(data._obserr[0]);   yh = &(data._obserr[0]);
-                break;
-            };
-            default: return;
-        };
-
-        TGraph *graph = new TGraphAsymmErrors(data._N, x, y, xl, xh, yl, yh);
+        double *x, *y, *dx, *dy;
+        x  = &(data._x[0]);        y  = &(data._y[0]);
+        dx = &(data._dx[0]);      dy  = &(data._dy[0]);
+        TGraph *graph = new TGraphErrors(data._N, x, y, dx, dy);
 
         entry_style style;
         style._label = data._id;

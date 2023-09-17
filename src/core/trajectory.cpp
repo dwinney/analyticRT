@@ -53,6 +53,17 @@ namespace analyticRT
         return std::real(evaluate(s));
     };
 
+    double raw_trajectory::width(double s)
+    {
+        auto f = [&](double x)
+        {
+            return real_part(x); 
+        };
+        double alphaPrime = boost::math::differentiation::finite_difference_derivative(f, s);
+
+        return imaginary_part(s) / alphaPrime / sqrt(s);
+    };
+    
     // -----------------------------------------------------------------------
     // Internal functions for evaluation
 

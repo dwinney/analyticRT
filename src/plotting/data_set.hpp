@@ -18,6 +18,29 @@
 
 namespace analyticRT
 {
+    // Define different archetypes of data
+    enum data_type { spectrum, timelike };
+
+    struct data_set
+    {
+        // Number of data points
+        int _N = 0;
+
+        // String id 
+        std::string _id = "data_set";
+
+        // What is being represented by data
+        data_type _type;
+        
+        // vectors to store independent and dependent variables and their errors
+        std::vector<double> _x, _y, _z, _dx, _dy, _dz;
+
+        // If we want a data entry in the legend
+        bool _add_to_legend = true;
+    };
+
+    // ------------------------------------------------------------------------------
+    // Rest are methods to get data_sets more easily
 
     // Importing data sets we'll need to be able to find the /data/ directory from the 
     // top level one. Thus we need to be able to access the JPACPHOTO environment variable
@@ -141,43 +164,6 @@ namespace analyticRT
         };
 
         return N;
-    };
-
-    // Define different archetypes of data
-    enum data_type { integrated_data, differential_data};
-
-    struct data_set
-    {
-        // Number of data points
-        int _N = 0;
-
-        std::string _id = "data_set";
-
-        data_type _type;
-        
-        // Vectors to store energy and momentum transfer variables and observable
-        std::vector<double> _w, _t, _obs, _obserr;
-
-        // Other possible vectors to store things like bin sizes, etc
-        std::array<std::vector<double>,2> _werr, _terr;
-
-        // Whether the values stored in _w correspond to invariant energy W = sqrt(s) (false)
-        // or lab frame energy Egamma (true)
-        bool _lab = false;
-
-        // Whether the momentum transfer values stored in _t correspond to invariant t (false)
-        // or t' = t - t_min (true)
-        bool _tprime = false;
-
-        // Whether saves values in _t are positive or negative t
-        // i.e. -t (true) vs t (false)
-        bool _negt   = false;
-
-        // For a differential set it may be useful to have an average s 
-        double _avg_w = 0;
-
-        // If we want a data entry in t he legend
-        bool _add_to_legend = false;
     };
 };
 

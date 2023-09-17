@@ -16,6 +16,7 @@
 #include <complex>
 
 #include <boost/math/quadrature/gauss_kronrod.hpp>
+#include <boost/math/differentiation/finite_difference.hpp>
 
 namespace analyticRT
 {
@@ -64,6 +65,7 @@ namespace analyticRT
         // Use set_parameters to set free variables
         // this checks that the size is the expected size
         void set_parameters( std::vector<double> pars);
+        inline int N_pars(){ return _Npars; };
 
         // This function actually distributes paramters to the model and must be specified
         virtual inline void allocate_parameters(std::vector<double> pars){ return; };
@@ -89,6 +91,9 @@ namespace analyticRT
         // Output the real or imaginary parts along real line
         double real_part(double s);
         double imaginary_part(double s);
+
+        // In the resonance regime we can approximate the real part as a linear function
+        double width(double s);
 
         // -------------------------------------------------------------------
         protected:

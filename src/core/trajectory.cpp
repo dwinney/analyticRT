@@ -18,7 +18,7 @@ namespace analyticRT
     {
         if (pars.size() != _Npars) return error(id() + "::set_parameters() :"
                                                      + " Input vector do not match expected number of free parameters!");
-        allocate_parameters(pars);
+        this->allocate_parameters(pars);
     };
 
     // Default parameter labels are just par[0], par[1], ...
@@ -35,6 +35,11 @@ namespace analyticRT
     // -----------------------------------------------------------------------
     // Evaluation of trajectory
 
+    complex raw_trajectory::evaluate(double s)
+    {
+        return _alphaSUB + DR_RHC(s) - DR_RHC(_sSUB);
+    };
+
     // Output the imaginary part on the real line
     double raw_trajectory::imaginary_part(double s)
     {
@@ -42,4 +47,41 @@ namespace analyticRT
         if (s <= _sLHC) return LHC(s);
         else return 0.;
     };
+
+    double raw_trajectory::real_part(double s)
+    {
+        return std::real(evaluate(s));
+    };
+
+    // -----------------------------------------------------------------------
+    // Internal functions for evaluation
+
+    // Evaluate dispersion relation on real axis with ieps perscriptions
+    complex raw_trajectory::DR_RHC(double s)
+    {
+        // We split the integration in two parts
+        // to properly handle the Principle Value and ieps perscription
+
+        double RHCs = (s > _sRHC) ? RHC(s) : 0.;
+        auto fdx = [this, s, RHCs](double x)
+        {
+            complex integrand;
+            integrand  = RHC(x) - RHCs;
+            integrand *= (s / x); // One subtraction
+            integrand /= (x - s - IEPS); 
+            return integrand;
+        };
+
+        // bounds of integration
+        double low = _sRHC;
+        double high = std::numeric_limits<double>::infinity();
+
+        complex logarithm, integral, result;
+        integral  = boost::math::quadrature::gauss_kronrod<double, 61>::integrate(fdx, low, high, 20, 1.E-9, NULL);
+        logarithm = RHCs * log(1. - (s + IEPS) / low);
+        result = (integral - logarithm) / M_PI;
+    
+        return result;
+    };
+
 };

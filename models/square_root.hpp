@@ -18,7 +18,19 @@ namespace analyticRT
         square_root(double R, std::string id)
         : raw_trajectory(R, id)
         {
-            set_Npars(3);
+            set_Npars(2);
+        };
+
+        // Parameters are the intercept and coupling
+        inline void allocate_parameters(std::vector<double> pars)
+        {
+            set_subtraction(0., pars[0]);
+            _coupling = pars[1];
+        };
+
+        inline std::vector<std::string> parameter_labels()
+        {
+            return {"alpha(0)", "coupling"};
         };
 
         protected:
@@ -26,7 +38,10 @@ namespace analyticRT
         // RHC given by a simple square root 
         inline double RHC(double s)
         {
-            return sqrt(s - _sRHC);
+            return _coupling * sqrt(s - _sRHC);
         };
+
+        // Coupling constant to the threshold
+        double _coupling = 0;
     };
 };

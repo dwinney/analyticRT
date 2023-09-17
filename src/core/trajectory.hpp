@@ -65,11 +65,11 @@ namespace analyticRT
         // this checks that the size is the expected size
         void set_parameters( std::vector<double> pars);
 
-        // Assign each free parameter a label to identify it in fitters and such
-        virtual std::vector<std::string> parameter_labels();
-
         // This function actually distributes paramters to the model and must be specified
         virtual inline void allocate_parameters(std::vector<double> pars){ return; };
+
+        // Assign each free parameter a label to identify it in fitters and such
+        virtual std::vector<std::string> parameter_labels();
 
         // Set an optional int flag to change model
         // By default this does nothing but save the flag value
@@ -83,7 +83,11 @@ namespace analyticRT
         // Set the subtraction location for the dispersion relation
         inline void set_subtraction(double s_sub, double val){ _sSUB = s_sub; _alphaSUB = val; };
 
-        // Output the imaginary part along real line
+        // Output the trajectory from evaluating dispersion relation
+        complex evaluate(double s);
+
+        // Output the real or imaginary parts along real line
+        double real_part(double s);
         double imaginary_part(double s);
 
         // -------------------------------------------------------------------
@@ -108,6 +112,10 @@ namespace analyticRT
 
         // -------------------------------------------------------------------
         private:
+
+        // Values of dispersion relations from each of the two cuts
+        // This shouldnt be needed outside of internal functions 
+        complex DR_RHC(double s);
 
         // String identifier to differentiate models at runtime
         std::string _id = "trajectory";

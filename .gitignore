@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+# Development, install, and test directories
+.vscode
+/tests/
+/build/
+/lib/
+/bin/

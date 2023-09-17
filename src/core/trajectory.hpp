@@ -119,6 +119,9 @@ namespace analyticRT
         // Once-subtracted DR parameters
         double _sSUB = 0., _alphaSUB = 0.;
 
+        // Maximum number of iterations to calculate
+        int _Niters = 5;
+
         // -------------------------------------------------------------------
         private:
 
@@ -131,9 +134,6 @@ namespace analyticRT
 
         // Number of free parameters
         int _Npars  = 0;
-
-        // Maximum number of iterations to calculate
-        int _Niters = 5;
 
         // Some flag to change model options
         int _option = 0, _debug = 0;

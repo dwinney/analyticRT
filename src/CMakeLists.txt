@@ -7,6 +7,9 @@ include_directories(plotting)
 
 ROOT_GENERATE_DICTIONARY(G__ANALYTICRT
     data_set.hpp
+    plot.hpp
+    plotter.hpp
+    trajectory.hpp
     LINKDEF ANALYTICRTLinkDef.h
 )
 add_library(ANALYTICRT SHARED ${SRC} G__ANALYTICRT.cxx )

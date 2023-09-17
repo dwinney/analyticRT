@@ -59,7 +59,6 @@ namespace analyticRT
         std::array<double,3> _s = {_sRHC, 2.12, 30.}, _c, _lam;
 
         // Iteration procedure for lambdas
-        int _Niter = 3;
         inline void iterate()
         {
             for (int i = 0; i < 3; i++)
@@ -67,9 +66,9 @@ namespace analyticRT
                 _lam[i] = 0.491 + 0.874*_s[i];
             };
 
-            for (int n = 0; n < _Niter; n++)
+            for (int n = 0; n < _Niters; n++)
             {
-                for (int i = 0; i < _Niter; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     _lam[i] = real_part(_s[i]);
                 };

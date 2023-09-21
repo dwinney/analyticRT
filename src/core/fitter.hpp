@@ -141,6 +141,9 @@ namespace analyticRT
         // Parameters are randomly initialized each time on the interval [-5, 5] unless custom limits are set
         void do_fit(int N);
 
+        // Repeat a fit N times but between each fit, call trajectory::iterate()
+        void iterate_fit(int N);
+
         // Return a vector of best-fit parameters from last fit
         inline std::vector<double> best_fit(){ return (_fit) ? _fit_pars : std::vector<double>(); };
 

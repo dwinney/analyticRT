@@ -143,6 +143,7 @@ namespace analyticRT
 
         // Move along the pars index when a parameter is not fixed
         int i = 0;
+
         for (auto par : _pars)
         {
             if (par._fixed)
@@ -157,6 +158,7 @@ namespace analyticRT
         };
 
         if (i != _Nfree) warning("fitter::convert", "Something went wrong in converting parameter vector.");
+
         return result;
     };
 
@@ -194,7 +196,7 @@ namespace analyticRT
         double chi2 = 0;
         for (int i = 0; i < data._N; i++)
         {
-            double s = data._x[i];
+            double s = pow(data._x[i], 2);
 
             double spin_th  = _trajectory->real_part(s);
             double spin_ex  = data._y[i];
@@ -338,6 +340,78 @@ namespace analyticRT
         std::cout << std::left << "Best fit found after N = " + std::to_string(N) + " iterations" << std::endl;
         line();
         print_results(false);
+    };
+
+    void fitter::iterate_fit(int N)
+    {
+        // Do the first fit on the "zeroth" solution: 
+         if (N == 0) return;
+
+        std::vector< std::vector<double> > values, errors;
+
+        divider();
+        std::cout << std::left << "Doing initial fit to uniterated trajectory..." << std::endl;
+
+        // Initial guess
+        std::vector<double> guess;
+        
+        // Initialize the guess for each parameter
+        for (auto par : _pars)
+        {
+            if (par._fixed) continue;
+
+            if (par._custom_limits) guess.push_back(_guesser->Uniform(par._lower, par._upper)); 
+            else                    guess.push_back(_guesser->Uniform(_guess_range[0], _guess_range[1]));
+        };
+
+        // Do out fit with this random guess
+        do_fit(guess, true);
+
+        // And set the global saved pars to the best_fit
+        line();
+        print_results(true);
+
+        divider();
+        std::cout << std::left << "Commencing iterative refitting..." << std::endl;
+        line();
+
+        for (int i = 0; i < N; i++)
+        {
+            std::vector<double> last_pars = convert(_minuit->X());
+            values.push_back(last_pars);
+            errors.push_back(convert(_minuit->Errors()));
+
+            _trajectory->iterate();
+            std::cout << std::left << "Iteration (" + std::to_string(i+1) + "/" + std::to_string(N) + "):" << std::endl;
+
+            do_fit(last_pars, false);
+        };
+        values.push_back(convert(_minuit->X()));
+        errors.push_back(convert(_minuit->Errors()));
+
+        line();
+        divider();
+        line();
+
+        divider(3);
+        print("ITERATION", "FIT VALUE", "ERROR");
+        divider(3);
+
+        line();
+
+        std::vector<std::string> labels = _trajectory->parameter_labels();
+        for (int i = 0; i < _trajectory->Npars(); i++)
+        {
+            divider(3);
+            print(labels[i]);
+            divider(3);
+            for (int j = 0; j < N + 1; j++)
+            {
+                print(j, values[j][i], errors[j][i]);
+            };
+            divider(3);
+            line();
+        };
     };
 
     // ---------------------------------------------------------------------------

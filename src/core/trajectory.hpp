@@ -87,7 +87,8 @@ namespace analyticRT
 
         // Many models can form iterative solutions between real and imaginary part
         // here you can set how many iterations to do
-        inline void max_iteractions(int x){ _Niters = x; };
+        inline  void max_iterations(int x){ _Niters = x; };
+        virtual void iterate(){};
 
         // Output the trajectory from evaluating dispersion relation
         complex evaluate(double s);
@@ -120,7 +121,7 @@ namespace analyticRT
         double _sSUB = 0., _alphaSUB = 0.;
 
         // Maximum number of iterations to calculate
-        int _Niters = 5;
+        int _Niters = 0;
 
         // -------------------------------------------------------------------
         private:

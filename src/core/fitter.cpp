@@ -50,10 +50,10 @@ namespace analyticRT
     void fitter::reset_parameters()
     {
         _pars.clear();
-        _Nfree = _trajectory->N_pars();
+        _Nfree = _trajectory->Npars();
 
         // populate parameters vector of appropriate size
-        for (int i = 0; i < _trajectory->N_pars(); i++)
+        for (int i = 0; i < _trajectory->Npars(); i++)
         {
             _pars.push_back(i);
         };
@@ -255,7 +255,7 @@ namespace analyticRT
         _minuit->SetFunction(_fcn);
     };
 
-    // Actually do the fit given a vector of size amp->N_pars() as starting values
+    // Actually do the fit given a vector of size amp->Npars() as starting values
     // Prints results to command line and sets best fit parameters into _amplitude
     void fitter::do_fit(std::vector<double> starting_guess, bool show_data)
     {

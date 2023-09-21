@@ -342,12 +342,13 @@ namespace analyticRT
         print_results(false);
     };
 
-    void fitter::iterate_fit(int N)
+    void fitter::iterative_fit(int N)
     {
         // Do the first fit on the "zeroth" solution: 
          if (N == 0) return;
 
         std::vector< std::vector<double> > values, errors;
+        std::vector<std::array<double,2>> chi2s;
 
         divider();
         std::cout << std::left << "Doing initial fit to uniterated trajectory..." << std::endl;
@@ -380,6 +381,7 @@ namespace analyticRT
             std::vector<double> last_pars = convert(_minuit->X());
             values.push_back(last_pars);
             errors.push_back(convert(_minuit->Errors()));
+            chi2s.push_back({_minuit->MinValue(), _minuit->MinValue() / (_N - _minuit->NFree())});
 
             _trajectory->iterate();
             std::cout << std::left << "Iteration (" + std::to_string(i+1) + "/" + std::to_string(N) + "):" << std::endl;
@@ -388,22 +390,29 @@ namespace analyticRT
         };
         values.push_back(convert(_minuit->X()));
         errors.push_back(convert(_minuit->Errors()));
+        chi2s.push_back({_minuit->MinValue(), _minuit->MinValue() / (_N - _minuit->NFree())});
 
         line();
         divider();
         line();
 
         divider(3);
+        print("ITERATION", "chi2", "chi2/dof");
+        divider(3);
+        for (int n = 0; n < N+1; n++)
+        {
+            print(n, chi2s[n][0], chi2s[n][1]);
+        };
+        
+        line();
+        divider(3);
         print("ITERATION", "FIT VALUE", "ERROR");
         divider(3);
-
-        line();
-
         std::vector<std::string> labels = _trajectory->parameter_labels();
         for (int i = 0; i < _trajectory->Npars(); i++)
         {
             divider(3);
-            print(labels[i]);
+            centered(3, labels[i]);
             divider(3);
             for (int j = 0; j < N + 1; j++)
             {

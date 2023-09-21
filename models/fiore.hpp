@@ -22,6 +22,7 @@ namespace analyticRT
         : raw_trajectory(R, id)
         {
             set_Npars(4);
+            initialize();
         };
 
         // Parameters are the intercept and coupling
@@ -32,7 +33,10 @@ namespace analyticRT
             _c[1] = pars[2];
             _c[2] = pars[3];
 
-            iterate();
+            for (int i = 0; i < _Niters; i++)
+            {
+                iterate();
+            };
         };
 
         inline std::vector<std::string> parameter_labels()
@@ -58,20 +62,20 @@ namespace analyticRT
         // Additional thresholds above the lowest one
         std::array<double,3> _s = {_sRHC, 2.12, 30.}, _c, _lam;
 
-        // Iteration procedure for lambdas
-        inline void iterate()
+        inline void initialize()
         {
             for (int i = 0; i < 3; i++)
             {
                 _lam[i] = 0.491 + 0.874*_s[i];
             };
+        };
 
-            for (int n = 0; n < _Niters; n++)
+        // Iteration procedure for lambdas
+        inline void iterate()
+        {
+            for (int i = 0; i < 3; i++)
             {
-                for (int i = 0; i < 3; i++)
-                {
-                    _lam[i] = real_part(_s[i]);
-                };
+                _lam[i] = real_part(_s[i]);
             };
         };
     };

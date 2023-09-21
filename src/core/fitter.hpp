@@ -142,7 +142,7 @@ namespace analyticRT
         void do_fit(int N);
 
         // Repeat a fit N times but between each fit, call trajectory::iterate()
-        void iterate_fit(int N);
+        void iterative_fit(int N);
 
         // Return a vector of best-fit parameters from last fit
         inline std::vector<double> best_fit(){ return (_fit) ? _fit_pars : std::vector<double>(); };

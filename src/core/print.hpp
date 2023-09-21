@@ -94,10 +94,10 @@ namespace analyticRT
     };
 
     // Print a string centered on the terminal 
-    inline void centered(std::string words)
+    inline void centered(int n, std::string words)
     {
         int x = words.length();
-        int gap_width = (TEXT_WIDTH - x)/2;
+        int gap_width = (n * PRINT_SPACING - x)/2;
         std::cout << std::left << std::setw(gap_width) << "" << std::setw(x) << words << std::setw(gap_width) << "" << std::endl;
     };
 };

@@ -6,6 +6,7 @@
 // ---------------------------------------------------------------------------
 
 #include "trajectory.hpp"
+#include <Math/Interpolator.h>
 
 namespace analyticRT
 {
@@ -18,6 +19,7 @@ namespace analyticRT
         : raw_trajectory(R, id)
         {
             set_Npars(4);
+            initalize();
         };
 
         // Parameters are the scale and beta coefficients
@@ -32,6 +34,11 @@ namespace analyticRT
             {
                 _coeffs.push_back(pars[i]);
             }
+
+            for (int i = 0; i < _Niters; i++)
+            {
+                iterate();
+            };
         };
 
         inline std::vector<std::string> parameter_labels()
@@ -59,37 +66,107 @@ namespace analyticRT
         inline double RHC(double s)
         {
             if (s < _sRHC) return 0.;
+            _s = s; // save so we can call it from anywhere 
 
-            // Zeta is the ratio of momenta squared over some scale
-            double zeta = (s - _sRHC) / (_Lam2 - _sRHC);
+            // For numerical stability, at asymptotic argumenets, simplify the equation
+            if (s > 100)
+            {
+                return (_gamma / PI) *  (previousRePart() * log(xi()) + log(beta()));
+            }
 
-            // Phase space factors
-            double rho = sqrt(1. - _sRHC / s);
+            // else use the Full expression
+            return (_gamma / PI) * rho() * log(1. + beta() * pow(xi(), previousRePart()) );
+        };
 
-            // Arbitrary rational function entering the coupling at low energies    
+        private:
+
+        // Save s at each evaluation step to not have to pass it around to each subfunction
+        double _s;
+
+        // Members related to the model for the imaginary part along the RHC
+
+        double _Lam2 = 10.;          // Scale of elastic unitarity
+        double _gamma = 1.;          // Overall coupling
+        std::vector<double> _coeffs; // (Real) coefficients of abitrary beta function inside the logarithm
+
+        // xi is the ratio of momenta squared over momenta evaluated at some scale s = Lambda^2
+        inline double xi(){ return (_s - _sRHC) / (_Lam2 - _sRHC); };
+
+        // Phase space factor
+        inline double rho(){ return sqrt(1. - _sRHC / _s); }
+
+        // Arbitrary rational function entering the coupling at low energies    
+        inline double beta()
+        {
             double beta = 0;
             for (int i = 0; i < _coeffs.size(); i++)
             {
-                beta += _coeffs[i] * pow(s - _sRHC, i);
+                beta += _coeffs[i] * pow(_s - _sRHC, i);
             };
-
-            double realpha = (0.459075 + 0.9*s) / sqrt(1. + s/70.);
-
-            if (s > 300)
-            {
-                return (_gamma / PI) * realpha * log(zeta);
-            }
-
-            return (_gamma / PI) * log(1. + rho * beta * pow(zeta, realpha) );
+            return beta;
         };
 
-        // (Real) coefficients of abitrary beta function inside the logarithm
-        std::vector<double> _coeffs; 
+        // Methods related to the interpolation of the real part 
+        
+        // For relatively small arguments, save an interpolation of the real part evaluated from DR
+        int _Ninterp = 100; // Total interpolation will have 2*_Ninterp points
+        ROOT::Math::Interpolator _ReAlphaInterp = ROOT::Math::Interpolator(2*_Ninterp, ROOT::Math::Interpolation::kCSPLINE);
 
-        // Scale entering the zeta factors 
-        double _Lam2 = 10.;
+        // Or at asymptotic arguments we match to a simple square-root
+        double _sAsym = 200, _ReAlphaAsym;
 
-        // Overall coupling
-        double _gamma = 1.;
+        // Evaluate the last saved iteration of the real part
+        inline double previousRePart()
+        {
+            return (_s < _sAsym) ? _ReAlphaInterp.Eval(_s) : _ReAlphaAsym * sqrt(_s / _sAsym);
+        };
+
+        // Replace prevously saved interpolation by evaluating the DR
+        inline void iterate()
+        {
+            std::vector<double> s, realpha;
+
+            // Near threshold, (s < s1) we use a lot of points
+            double s1 = 50;
+            for (int i = 0; i < _Ninterp; i++)
+            {
+                double si  = _sRHC + (s1 - _sRHC) * double(i) / double(_Ninterp-1); 
+                double rei = real_part(si);
+                s.push_back(si); realpha.push_back(rei);
+            };
+
+            // Repeat for an other N points from s1 to the asymptotic matchpoint
+            double s2 = s1 + 1;
+            for (int i = 0; i < _Ninterp; i++)
+            {
+                double si  = s2 + (_sAsym - s2) * double(i) / double(_Ninterp-1); 
+                double rei = real_part(si);
+                s.push_back(si); realpha.push_back(rei);
+            };
+        
+            _ReAlphaAsym = real_part(_sAsym);
+            _ReAlphaInterp.SetData(s, realpha);
+        };
+
+        inline void initalize()
+        {
+             // The "zeroth" iteration, using the linear rho trajectory as an ansatz
+            auto initial_guess = [] (double s)
+            {
+                return (0.5 + 0.9 * s) / sqrt(1. + s / 70); 
+            };
+            
+            std::vector<double> s, realpha;
+
+            for (int i = 0; i < 2*_Ninterp; i++)
+            {
+                double si  = _sRHC + (_sAsym - _sRHC) * double(i) / double(_Ninterp-1); 
+                double rei = initial_guess(si);
+                s.push_back(si); realpha.push_back(rei);
+            };
+            
+            _ReAlphaAsym = initial_guess(_sAsym);
+            _ReAlphaInterp.SetData(s, realpha);
+        };
     };
 };

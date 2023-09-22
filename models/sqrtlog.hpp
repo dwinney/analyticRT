@@ -18,7 +18,7 @@ namespace analyticRT
         sqrtlog(double R, std::string id)
         : raw_trajectory(R, id)
         {
-            set_Npars(4);
+            set_Npars(3);
             initalize();
         };
 
@@ -75,7 +75,7 @@ namespace analyticRT
             }
 
             // else use the Full expression
-            return (_gamma / PI) * rho() * log(1. + beta() * pow(xi(), previousRePart()) );
+            return (_gamma / PI) *  log(1. + rho() * beta() * pow(xi(), previousRePart()) );
         };
 
         private:
@@ -85,7 +85,7 @@ namespace analyticRT
 
         // Members related to the model for the imaginary part along the RHC
 
-        double _Lam2 = 10.;          // Scale of elastic unitarity
+        double _Lam2  = 5.;          // Scale of elastic unitarity
         double _gamma = 1.;          // Overall coupling
         std::vector<double> _coeffs; // (Real) coefficients of abitrary beta function inside the logarithm
 
@@ -103,7 +103,7 @@ namespace analyticRT
             {
                 beta += _coeffs[i] * pow(_s - _sRHC, i);
             };
-            return beta;
+            return beta / _gamma;
         };
 
         // Methods related to the interpolation of the real part 
@@ -153,7 +153,7 @@ namespace analyticRT
              // The "zeroth" iteration, using the linear rho trajectory as an ansatz
             auto initial_guess = [] (double s)
             {
-                return (0.5 + 0.9 * s) / sqrt(1. + s / 40); 
+                return (0.5 + 0.9 * s) / sqrt(1. + s / 20); 
             };
             
             std::vector<double> s, realpha;

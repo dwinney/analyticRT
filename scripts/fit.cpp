@@ -5,24 +5,21 @@
 #include "sqrtlog.hpp"
 #include "fiore.hpp"
 
-void fit_test()
+void fit()
 {   
     using namespace analyticRT;
 
     trajectory alpha = new_trajectory<sqrtlog>(4.*M2_PION, "Sqrt-Log trajectory");
     alpha->set_subtraction(0., 0.477);
-    alpha->set_option(3);
 
     fitter fitter(alpha);
     fitter.add_data( isovector_spectrum() );
     
-    // fitter.fix_parameter("gamma", 1.);
     fitter.set_parameter_limits("gamma", {0., 5.});
     fitter.set_parameter_limits("c[1]",  {0., 10.});
     fitter.set_parameter_limits("c[2]",  {0., 10.});
-    fitter.set_parameter_limits("c[3]",  {0., 10.});
 
-    fitter.iterative_fit(5);
+    fitter.iterative_fit(10);
 
     // Curves to be plotted below
     auto realpha = [alpha](double s)

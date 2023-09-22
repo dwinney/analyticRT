@@ -4,14 +4,14 @@
 #include "trajectory.hpp"
 #include "sqrtlog.hpp"
 
-void iteration_test()
+void iterations()
 {   
     using namespace analyticRT;
 
-    std::vector<double> pars = {1.10624931, 4.3533817, 0.965906772, 4.53498304};
-
     trajectory alpha = new_trajectory<sqrtlog>(4.*M2_PION);
     alpha->set_subtraction(0., 0.477);
+
+    std::vector<double> pars = {1.06044486, 2.15706648,  2.07668753};
 
     // Curves to be plotted below
     auto realpha = [alpha](double s)
@@ -37,8 +37,8 @@ void iteration_test()
     {
         alpha->max_iterations(n);
         alpha->set_parameters(pars);
-        replot.add_curve({-2, 7.5}, realpha, "n = " + std::to_string(n));
-        replot.add_dashed({-2,7.5}, imalpha);
+        replot.add_curve( {-2, 7.5}, realpha, "n = " + std::to_string(n));
+        replot.add_dashed({-2, 7.5}, imalpha);
     };
 
     plot_iter(0);
@@ -48,5 +48,5 @@ void iteration_test()
 
     replot.set_legend(0.4, 0.7);
     replot.set_legend_spacing(0.02);
-    replot.save("results.pdf");
+    replot.save("iterations.pdf");
 };

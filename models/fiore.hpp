@@ -23,6 +23,7 @@ namespace analyticRT
         {
             set_Npars(4);
             initialize();
+            max_iterations(3);
         };
 
         // Parameters are the intercept and coupling

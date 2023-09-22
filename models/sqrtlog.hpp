@@ -153,7 +153,7 @@ namespace analyticRT
              // The "zeroth" iteration, using the linear rho trajectory as an ansatz
             auto initial_guess = [] (double s)
             {
-                return (0.5 + 0.9 * s) / sqrt(1. + s / 70); 
+                return (0.5 + 0.9 * s) / sqrt(1. + s / 40); 
             };
             
             std::vector<double> s, realpha;

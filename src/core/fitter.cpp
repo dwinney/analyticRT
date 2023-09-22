@@ -337,7 +337,7 @@ namespace analyticRT
         _trajectory->set_parameters(_best_pars);
 
         // And set the global saved pars to the best_fit
-        std::cout << std::left << "Best fit found after N = " + std::to_string(N) + " iterations" << std::endl;
+        print( "Best fit found after N = " + std::to_string(N) + " iterations" );
         line();
         print_results(false);
     };
@@ -347,11 +347,9 @@ namespace analyticRT
         // Do the first fit on the "zeroth" solution: 
          if (N == 0) return;
 
-        std::vector< std::vector<double> > values, errors;
         std::vector<std::array<double,2>> chi2s;
 
-        divider();
-        std::cout << std::left << "Doing initial fit to uniterated trajectory..." << std::endl;
+        divider(); print("Doing initial fit to uniterated trajectory...");
 
         // Initial guess
         std::vector<double> guess;
@@ -368,58 +366,62 @@ namespace analyticRT
         // Do out fit with this random guess
         do_fit(guess, true);
 
-        // And set the global saved pars to the best_fit
-        line();
-        print_results(true);
+        divider(); print("Commencing iterative refitting..."); line();
 
-        divider();
-        std::cout << std::left << "Commencing iterative refitting..." << std::endl;
-        line();
-
+        // For each subsequent fit we grab the previous best fit parameters
+        // and use them as the seed for the new fit after calling trajectory::iterate()
+        std::vector<double> last_pars, last_errors; 
         for (int i = 0; i < N; i++)
         {
-            std::vector<double> last_pars = convert(_minuit->X());
-            values.push_back(last_pars);
-            errors.push_back(convert(_minuit->Errors()));
+            last_pars   = convert(_minuit->X());
+            last_errors = convert(_minuit->Errors());
+            std::vector<double> next_pars;
+
+            // We have to filter fixed parameters
+            for (auto& par : _pars)
+            {
+                if (!par._fixed) next_pars.push_back( last_pars[par._i] );
+
+                // save each iteration inside the paramter for calling later in summar
+                par._itval.push_back( last_pars[   par._i ] );
+                par._iterr.push_back( last_errors[ par._i ] );
+            };
             chi2s.push_back({_minuit->MinValue(), _minuit->MinValue() / (_N - _minuit->NFree())});
 
             _trajectory->iterate();
             std::cout << std::left << "Iteration (" + std::to_string(i+1) + "/" + std::to_string(N) + "):" << std::endl;
 
-            do_fit(last_pars, false);
+            do_fit(next_pars, false);
         };
-        values.push_back(convert(_minuit->X()));
-        errors.push_back(convert(_minuit->Errors()));
+
+        last_pars   = convert(_minuit->X());
+        last_errors = convert(_minuit->Errors());
+        for (auto& par : _pars)
+        {
+            par._itval.push_back( last_pars[   par._i ] );
+            par._iterr.push_back( last_errors[ par._i ] );
+        };
         chi2s.push_back({_minuit->MinValue(), _minuit->MinValue() / (_N - _minuit->NFree())});
 
-        line();
-        divider();
-        line();
-
-        divider(3);
-        print("ITERATION", "chi2", "chi2/dof");
-        divider(3);
+        line(); divider(); line();
+        divider(3); print("ITERATION", "chi2", "chi2/dof"); divider(3);
         for (int n = 0; n < N+1; n++)
         {
             print(n, chi2s[n][0], chi2s[n][1]);
         };
         
-        line();
-        divider(3);
-        print("ITERATION", "FIT VALUE", "ERROR");
-        divider(3);
-        std::vector<std::string> labels = _trajectory->parameter_labels();
-        for (int i = 0; i < _trajectory->Npars(); i++)
+        line(); divider(3); print("ITERATION", "FIT VALUE", "ERROR"); divider(3);
+        for (auto par : _pars)
         {
-            divider(3);
-            centered(3, labels[i]);
-            divider(3);
+            if (par._fixed) continue;
+
+            divider(3); centered(3, par._label); divider(3);
+
             for (int j = 0; j < N + 1; j++)
             {
-                print(j, values[j][i], errors[j][i]);
+                print(j, par._itval[j], par._iterr[j]);
             };
-            divider(3);
-            line();
+            divider(3); line();
         };
     };
 

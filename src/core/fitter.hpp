@@ -45,6 +45,9 @@ namespace analyticRT
         double _lower         = 0;
         double _step          = 0.1;
 
+        // For iteration fitting save each step
+        std::vector<double> _itval, _iterr;
+
         friend class fitter;
         static inline std::string default_label(int i)
         {

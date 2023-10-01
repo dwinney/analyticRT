@@ -25,7 +25,7 @@ void results()
     alpha->set_subtraction(0., 0.477);
     alpha->set_option(2);
     alpha->max_iterations(3);
-    alpha->set_parameters({1.06044486, 2.15706648,  2.07668753});
+    alpha->set_parameters({1.06038145, 0.72811094, 0.700916037});
 
     auto re = [](trajectory alpha)
     {

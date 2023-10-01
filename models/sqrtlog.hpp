@@ -75,7 +75,7 @@ namespace analyticRT
             }
 
             // else use the Full expression
-            return (_gamma / PI) *  log(1. + rho() * beta() * pow(xi(), previousRePart()) );
+            return (_gamma / PI) *  log(1. + ( PI / _gamma) * rho() * beta() * pow(xi(), previousRePart()) );
         };
 
         private:

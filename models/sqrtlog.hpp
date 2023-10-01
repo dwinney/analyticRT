@@ -26,11 +26,12 @@ namespace analyticRT
         inline void allocate_parameters(std::vector<double> pars)
         {
             // Overall coupling
-            _gamma = pars[0]; 
+            set_subtraction(0., pars[1]);
+            _gamma = pars[1]; 
 
             // Individual couplings
             _coeffs.clear();
-            for (int i = 1; i < Npars(); i++)
+            for (int i = 2; i < Npars(); i++)
             {
                 _coeffs.push_back(pars[i]);
             }
@@ -43,11 +44,11 @@ namespace analyticRT
 
         inline std::vector<std::string> parameter_labels()
         {
-            std::vector<std::string> labels = {"gamma"};
+            std::vector<std::string> labels = {"alpha(0)", "gamma"};
 
-            for (int i = 1; i < Npars(); i++)
+            for (int i = 2; i < Npars(); i++)
             {
-                labels.push_back( "c[" + std::to_string(i) + "]");
+                labels.push_back( "c[" + std::to_string(i-1) + "]");
             };
 
             return labels;
@@ -57,7 +58,7 @@ namespace analyticRT
         inline void set_option(int n)
         {
             _coeffs.clear();
-            set_Npars(n + 1);
+            set_Npars(n + 2);
         };
 
         protected:

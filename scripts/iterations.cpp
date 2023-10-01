@@ -9,9 +9,9 @@ void iterations()
     using namespace analyticRT;
 
     trajectory alpha = new_trajectory<sqrtlog>(4.*M2_PION);
-    alpha->set_subtraction(0., 0.477);
-
-    std::vector<double> pars = {1.06038145, 0.72811094, 0.700916037};
+    alpha->set_option(2);
+    
+    std::vector<double> pars = {0.518428815, 1.05828109, 0.831810124, 0.444322125};
 
     // Curves to be plotted below
     auto realpha = [alpha](double s)

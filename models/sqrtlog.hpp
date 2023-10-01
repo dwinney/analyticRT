@@ -26,7 +26,7 @@ namespace analyticRT
         inline void allocate_parameters(std::vector<double> pars)
         {
             // Overall coupling
-            set_subtraction(0., pars[1]);
+            set_subtraction(0., pars[0]);
             _gamma = pars[1]; 
 
             // Individual couplings
@@ -76,7 +76,7 @@ namespace analyticRT
             }
 
             // else use the Full expression
-            return (_gamma / PI) *  log(1. + ( PI / _gamma) * rho() * beta() * pow(xi(), previousRePart()) );
+            return (_gamma / PI) *  log(1. + (PI / _gamma) * rho() * beta() * pow(xi(), previousRePart()) );
         };
 
         private:
@@ -104,7 +104,7 @@ namespace analyticRT
             {
                 beta += _coeffs[i] * pow(_s - _sRHC, i);
             };
-            return beta / _gamma;
+            return beta;
         };
 
         // Methods related to the interpolation of the real part 

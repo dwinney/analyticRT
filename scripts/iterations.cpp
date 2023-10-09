@@ -1,3 +1,14 @@
+// Test of iteration convergence from fit results. 
+// Plots trajectory at each iterations up to n = 5
+//
+// Author:       Daniel Winney (2023)
+// Affiliation:  Joint Physics Analysis Center (JPAC)
+// Email:        daniel.winney@gmail.com
+// ---------------------------------------------------------------------------
+// REFERENCES:
+// [1] arXiv:hep-ph/0011035
+// ---------------------------------------------------------------------------
+
 #include "trajectory_data.hpp"
 #include "trajectory_plots.hpp"
 #include "fitter.hpp"

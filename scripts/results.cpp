@@ -1,4 +1,4 @@
-// Reproduction of the rho-a2 trajectory from [1]
+// Reproduction of the rho-a2 trajectory from [1] compared to fit results using sqrtlog
 //
 // Author:       Daniel Winney (2023)
 // Affiliation:  Joint Physics Analysis Center (JPAC)

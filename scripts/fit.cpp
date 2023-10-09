@@ -1,3 +1,13 @@
+// conducts fit to isovector resonance masses and widths and outputs results
+//
+// Author:       Daniel Winney (2023)
+// Affiliation:  Joint Physics Analysis Center (JPAC)
+// Email:        daniel.winney@gmail.com
+// ---------------------------------------------------------------------------
+// REFERENCES:
+// [1] arXiv:hep-ph/0011035
+// ---------------------------------------------------------------------------
+
 #include "trajectory_data.hpp"
 #include "trajectory_plots.hpp"
 #include "fitter.hpp"
@@ -10,7 +20,7 @@ void fit()
     using namespace analyticRT;
 
     trajectory alpha = new_trajectory<sqrtlog>(4.*M2_PION, "Sqrt-Log trajectory");
-    alpha->set_option(2);
+    alpha->set_option(1);
 
     fitter fitter(alpha);
     fitter.add_data( isovector_spectrum() );
@@ -18,9 +28,9 @@ void fit()
     fitter.set_parameter_limits("alpha(0)", {0.,1});
     fitter.set_parameter_limits("gamma", {0.1, 2.});
     fitter.set_parameter_limits("c[1]",  {0., 10.});
-    fitter.set_parameter_limits("c[2]",  {0., 10.});
+    // fitter.set_parameter_limits("c[2]",  {0., 10.});
     
-    fitter.iterative_fit(5);
+    fitter.iterative_fit(3);
 
     // Curves to be plotted below
     auto realpha = [alpha](double s)

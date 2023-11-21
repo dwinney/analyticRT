@@ -1,0 +1,119 @@
+// Define an isobar, these work like the full amplitude but specify
+// only a single channel and therefore fixed isospin
+//
+// ------------------------------------------------------------------------------
+// Author:       Daniel Winney (2023)
+// Affiliation:  Joint Physics Analysis Center (JPAC),
+//               Helmholtz Institute (HISKP)
+// Email:        daniel.winney@gmail.com
+// ---------------------------------------------------------------------------
+
+#ifndef ISOBAR_HPP
+#define ISOBAR_HPP
+
+#include "key.hpp"
+#include "constants.hpp"
+#include "kinematics.hpp"
+#include "legendre_P.hpp"
+#include <boost/math/quadrature/gauss_kronrod.hpp>
+
+namespace analyticRT
+{
+    // Forward declare amplitude for typedef below
+    class raw_isobar;
+
+    // We want to be able to add isobars together so never use raw_amplitude directly
+    // Instead always work with pointers
+    using isobar    = std::shared_ptr<raw_isobar>;
+
+    template<class A> 
+    inline isobar new_isobar()             {     return std::make_shared<A>(key());              };
+    template<class A, class B> 
+    inline isobar new_isobar(B x)          {     return std::make_shared<A>(key(), x);           };
+    template<class A, class B, class C> 
+    inline isobar new_isobar(B x, C y)     {     return std::make_shared<A>(key(), x, y);        };
+    template<class A, class B, class C, class D> 
+    inline isobar new_isobar(B x, C y, D z){     return std::make_shared<A>(key(), x, y, z);     };
+    template<class A, class B, class C, class D, class E> 
+    inline isobar new_isobar(B x, C y, D z, E a){ return std::make_shared<A>(key(), x, y, z, a); };
+
+    class raw_isobar
+    {
+        public: 
+
+        // Basic constructor
+        raw_isobar(key x, unsigned int isospin) 
+        : _isospin(isospin)
+        { 
+            check_isospin(isospin);
+        };
+
+        // Save a string to id the amplitude
+        raw_isobar(key x, unsigned int isospin, std::string id)
+        : _id(id), _isospin(isospin)
+        {
+            check_isospin(isospin);
+        };
+
+        // ---------------------------------------------------------------------------
+        // Getters
+
+        inline std::string id(){ return _id; };            // string id 
+        inline double N_free(){  return _Nfree; };         // # of free parameters
+        inline unsigned int isospin(){ return _isospin; }; // fixed isospin
+
+        // ---------------------------------------------------------------------------
+        // Setters
+
+        inline void set_id(std::string id){ _id = id; };
+
+        // Script-side call to set the parameters
+        void set_parameters(std::vector<double> pars);
+
+        // ---------------------------------------------------------------------------
+        // Virtual methods 
+
+        // Amplitude side call to set the parameters which should be overriden by each implementation
+        // By default we do nothing
+        virtual void allocate_parameters(std::vector<double> pars){ if (N_free() != 0) warning("allocate_parameters", "No allocation function implemented!"); };
+
+        // Evaluate isobar function as a function of s and zs
+        virtual complex evaluate(double s, double zs) = 0;
+
+        // Calculate the projection onto the direct or cross channels numerically
+        // These can be overridden if the projections can easily be done analytically
+        virtual complex direct_projection(unsigned int j, double s);
+        virtual complex cross_projection( unsigned int j, double s);
+
+        // For fitting print a list of labels to differentiate each free parameter
+        // By default just print {p[0], p[1], p[2], ...}
+        virtual std::vector<std::string> parameter_labels()
+        {
+            std::vector<std::string> v;
+            for (int i = 0; i < _Nfree; i++)
+            {
+                v.push_back( "p["+std::to_string(i)+"]");
+            };
+            return v;
+        };
+
+        protected: 
+
+        // Change the number of free parameters from inside
+        inline void set_Nfree(unsigned int n){ _Nfree = n; };
+
+        private:
+
+        int _isospin = -1;
+        inline void check_isospin(unsigned int iso)
+        {
+            if (iso > 2) fatal("raw_isobar", "Unphysical isospin passed (" + std::to_string(iso) + ")");
+        };
+
+        // Basic properties of the amplitude
+        std::string _id = "raw_amplitude";  // String id
+        int _Nfree = 0;                     // # of free parameters
+    };
+};
+
+#endif

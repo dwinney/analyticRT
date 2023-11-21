@@ -9,5 +9,6 @@
 #pragma link C++ defined_in "plotter.hpp";
 #pragma link C++ defined_in "plot.hpp";
 #pragma link C++ defined_in "trajectory.hpp";
+#pragma link C++ defined_in "isobar.hpp";
 
 #endif

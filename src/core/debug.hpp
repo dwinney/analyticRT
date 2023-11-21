@@ -23,7 +23,7 @@ namespace analyticRT
     // Throw an error message then quits code 
     inline void fatal()
     {
-        std::cout << std::left << "FATAL ERROR! Quiting..." << std::endl;
+        std::cout << std::left << "FATAL ERROR! Quitting..." << std::endl;
         exit( EXIT_FAILURE );
     };
 
@@ -31,7 +31,7 @@ namespace analyticRT
     inline void fatal(std::string location, std::string reason = "")
     {
         std::cout << std::left << "FATAL ERROR! " + location + ": " + reason << std::endl;
-        std::cout << std::left << "Quiting..." << std::endl;
+        std::cout << std::left << "Quitting..." << std::endl;
 
         exit( EXIT_FAILURE );
     };

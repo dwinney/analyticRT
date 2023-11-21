@@ -10,6 +10,7 @@ ROOT_GENERATE_DICTIONARY(G__ANALYTICRT
     plot.hpp
     plotter.hpp
     trajectory.hpp
+    isobar.hpp
     LINKDEF ANALYTICRTLinkDef.h
 )
 add_library(ANALYTICRT SHARED ${SRC} G__ANALYTICRT.cxx )

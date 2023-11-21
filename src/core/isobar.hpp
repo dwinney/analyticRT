@@ -1,6 +1,5 @@
-// Define an isobar, these work like the full amplitude but specify
-// only a single channel and therefore fixed isospin
-//
+// Define an isobar, which is restricted to a single isospin
+// 
 // ------------------------------------------------------------------------------
 // Author:       Daniel Winney (2023)
 // Affiliation:  Joint Physics Analysis Center (JPAC),
@@ -55,12 +54,29 @@ namespace analyticRT
             check_isospin(isospin);
         };
 
+        // Constructor to be used if initializing a sum
+        raw_isobar(key x, unsigned int isospin, std::vector<isobar> vs, std::string id)
+        : _id(id), _isospin(isospin), _isobars(vs)
+        {
+            check_isospin(isospin);
+
+            int n = 0;
+            for (auto v : vs)
+            {
+                n += v->N_free();
+            }
+            set_Nfree(n);
+        };
+
         // ---------------------------------------------------------------------------
         // Getters
 
-        inline std::string id(){ return _id; };            // string id 
-        inline double N_free(){  return _Nfree; };         // # of free parameters
+        inline std::string id(){ return _id;    };         // string id 
+        inline int N_free()    { return _Nfree; };         // # of free parameters
         inline unsigned int isospin(){ return _isospin; }; // fixed isospin
+
+        // If the current isobar pointer describes a sum
+        inline bool is_sum(){ return !(_isobars.size() == 0); };
 
         // ---------------------------------------------------------------------------
         // Setters
@@ -75,10 +91,10 @@ namespace analyticRT
 
         // Amplitude side call to set the parameters which should be overriden by each implementation
         // By default we do nothing
-        virtual void allocate_parameters(std::vector<double> pars){ if (N_free() != 0) warning("allocate_parameters", "No allocation function implemented!"); };
+        virtual void allocate_parameters(std::vector<double> pars);
 
         // Evaluate isobar function as a function of s and zs
-        virtual complex evaluate(double s, double zs) = 0;
+        virtual complex evaluate(double s, double zs);
 
         // Calculate the projection onto the direct or cross channels numerically
         // These can be overridden if the projections can easily be done analytically
@@ -102,7 +118,12 @@ namespace analyticRT
         // Change the number of free parameters from inside
         inline void set_Nfree(unsigned int n){ _Nfree = n; };
 
+        friend std::vector<isobar> get_isobars(isobar a);
+    
         private:
+
+        // A single isobar can be the sum of multiple terms 
+        std::vector<isobar> _isobars;
 
         int _isospin = -1;
         inline void check_isospin(unsigned int iso)
@@ -114,6 +135,14 @@ namespace analyticRT
         std::string _id = "raw_amplitude";  // String id
         int _Nfree = 0;                     // # of free parameters
     };
+
+    // ------------------------------------------------------------------------------
+    // External methods for sums of isobars
+
+    inline std::vector<isobar> get_isobars(isobar a){ return a->is_sum() ? a->_isobars : std::vector<isobar>{{a}}; };
+
+    isobar operator+(isobar a, isobar b);
+
 };
 
 #endif

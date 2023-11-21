@@ -12,6 +12,9 @@
 
 namespace analyticRT
 {
+    // ---------------------------------------------------------------------------
+    // Parameter handling 
+
     // Make sure the parameters have the correct size and then feed it to allocate_parameters
     void raw_isobar::set_parameters(std::vector<double> pars)
     {
@@ -23,6 +26,34 @@ namespace analyticRT
         };
 
         allocate_parameters(pars);
+    };
+
+    void raw_isobar::allocate_parameters(std::vector<double> x)
+    {
+        // For each subamplitude grab a subvector of its parameters
+        auto running_iter = x.begin();
+        for (isobar amp : _isobars)
+        {
+            auto sub_pars = std::vector<double>(running_iter, running_iter + amp->N_free());
+            amp->set_parameters(sub_pars);
+
+            running_iter += amp->N_free();
+        };
+        return;
+    };
+
+    // ---------------------------------------------------------------------------
+    // Default virtual methods 
+
+    // The default evaluation is to iterate over sub-isobars
+    complex raw_isobar::evaluate(double s, double zs)
+    {
+        complex result = 0.;
+        for (auto x : _isobars)
+        {
+            result += x->evaluate(s, zs);
+        };
+        return result;
     };
 
     // By default we calculate the partial wave projection numerically
@@ -45,5 +76,28 @@ namespace analyticRT
         };
 
         return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(dF, -1, 1, 5, 1.E-9, NULL);
+    };
+
+    // ------------------------------------------------------------------------------
+    // External methods for sums of isobars
+    isobar operator+(isobar a, isobar b)
+    {
+        bool are_compatible = (a->isospin() == b->isospin());
+        if (!are_compatible)
+        {
+            warning("Tried adding two non-compatible isobars (" + a->id() + " and " + b->id() + ")!");
+            return nullptr;
+        }
+
+        std::string id = a->id() + " + " + b->id();
+
+        // This allows the saved pointers to all ways be "base" level isobars in stead of other sums
+        std::vector<isobar> from_a = get_isobars(a);
+        std::vector<isobar> from_b = get_isobars(b);
+
+        from_a.insert(from_a.end(), from_b.begin(), from_b.end());
+
+        // Initialize and return a new isobar
+        return new_isobar<raw_isobar>(a->isospin(), from_a, id);
     };
 };

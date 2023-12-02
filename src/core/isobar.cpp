@@ -18,9 +18,9 @@ namespace analyticRT
     // Make sure the parameters have the correct size and then feed it to allocate_parameters
     void raw_isobar::set_parameters(std::vector<double> pars)
     {
-        if (pars.size() != N_free()) 
+        if (pars.size() != Nfree()) 
         {
-            warning(id(), "Incorrect number of parameters passed! Expected " + std::to_string(N_free()) + 
+            warning(id(), "Incorrect number of parameters passed! Expected " + std::to_string(Nfree()) + 
                           " but received " + std::to_string(pars.size()) + "!");
             return;
         };
@@ -34,10 +34,10 @@ namespace analyticRT
         auto running_iter = x.begin();
         for (isobar amp : _isobars)
         {
-            auto sub_pars = std::vector<double>(running_iter, running_iter + amp->N_free());
+            auto sub_pars = std::vector<double>(running_iter, running_iter + amp->Nfree());
             amp->set_parameters(sub_pars);
 
-            running_iter += amp->N_free();
+            running_iter += amp->Nfree();
         };
         return;
     };
@@ -72,7 +72,7 @@ namespace analyticRT
         // No factor of 2 because t and u channels are summed
         auto dF = [j, s, this](double z)
         {
-            return legendre_P(j, z) * this->evaluate(t(s, z), z_t(s, z));
+            return legendre_P(j, z) * this->evaluate(t_man(s, z), z_t(s, z));
         };
 
         return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(dF, -1, 1, 5, 1.E-9, NULL);

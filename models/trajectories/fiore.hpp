@@ -1,4 +1,3 @@
-
 // Trajectory resulting from the model in [1]
 //
 // Author:       Daniel Winney (2023)

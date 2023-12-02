@@ -43,9 +43,7 @@ namespace analyticRT
     // Output the imaginary part on the real line
     double raw_trajectory::imaginary_part(double s)
     {
-        if (s >= _sRHC) return RHC(s);
-        if (s <= _sLHC) return LHC(s);
-        else return 0.;
+        return std::imag(evaluate(s));
     };
 
     double raw_trajectory::real_part(double s)

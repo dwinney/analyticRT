@@ -50,10 +50,10 @@ namespace analyticRT
     void fitter::reset_parameters()
     {
         _pars.clear();
-        _Nfree = _trajectory->Npars();
+        _Nfree = _trajectory->Nfree();
 
         // populate parameters vector of appropriate size
-        for (int i = 0; i < _trajectory->Npars(); i++)
+        for (int i = 0; i < _trajectory->Nfree(); i++)
         {
             _pars.push_back(i);
         };

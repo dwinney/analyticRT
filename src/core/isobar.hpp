@@ -63,7 +63,7 @@ namespace analyticRT
             int n = 0;
             for (auto v : vs)
             {
-                n += v->N_free();
+                n += v->Nfree();
             }
             set_Nfree(n);
         };
@@ -72,7 +72,7 @@ namespace analyticRT
         // Getters
 
         inline std::string id(){ return _id;    };         // string id 
-        inline int N_free()    { return _Nfree; };         // # of free parameters
+        inline int Nfree()    { return _Nfree; };         // # of free parameters
         inline unsigned int isospin(){ return _isospin; }; // fixed isospin
 
         // If the current isobar pointer describes a sum

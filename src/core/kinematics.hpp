@@ -17,19 +17,39 @@ namespace analyticRT
     const double M2  = M_PION*M_PION;
     const double STH = 4.*M2;
 
+    const double C[3][3] = 
+    {
+        {1./3.,  1.,     5./3.},
+        {1./3.,  1./2., -5./6.},
+        {1./3., -1./2.,  1./6.}
+    };
+
     // CM momentum
-    inline complex p(double s){ return csqrt(Kallen(s, M2, M2))/ 2./ csqrt(s); };
-    inline double p2(double s){ return Kallen(s, M2, M2)/ 4./ s; };
+    inline double q(double s){  return (s >= 4*M2*M2) ? sqrt(Kallen(s, M2, M2))/ 2./ sqrt(s) : NaN<double>(); };
+    inline double q2(double s){ return Kallen(s, M2, M2)/ 4./ s; };
+
+    // Chew-Mandelstam Phase space factor 
+    inline complex rho(double s)
+    {
+        double m1 = M_PION, m2 = M_PION;
+        complex rho, xi;
+        complex result;
+
+        rho    = csqrt(Kallen(s, m1*m1, m2*m2)) / s;
+        xi     = 1 - (m1+m2)*(m1+m2)/s;
+        result = (rho*log((xi + rho) / (xi - rho)) - xi*(m2-m1)/(m2+m1)*log(m2/m1)) / PI;
+        return result / (16*PI);
+    };
 
     // variables from s-channel quantities
-    inline  double t(double s, double zs){ return -2.*p2(s)*(1. - zs); };
-    inline  double u(double s, double zs){ return -2.*p2(s)*(1. + zs); };
+    inline  double t_man(double s, double zs){ return -2.*q2(s)*(1. - zs); };
+    inline  double u_man(double s, double zs){ return -2.*q2(s)*(1. + zs); };
 
 
     // Cross channel angles
     inline double z(double s, double t, double u){ return s*(t - u)/Kallen(s, M2, M2); };
-    inline double z_t(double s, double zs){ return z(t(s, zs), s, u(s, zs)); };
-    inline double z_u(double s, double zs){ return z(u(s, zs), t(s, zs), s); };
+    inline double z_t(double s, double zs){ return z(t_man(s, zs), s, u_man(s, zs)); };
+    inline double z_u(double s, double zs){ return z(u_man(s, zs), t_man(s, zs), s); };
 };
 
 #endif

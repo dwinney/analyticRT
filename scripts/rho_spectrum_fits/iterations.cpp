@@ -12,14 +12,13 @@
 #include "trajectory_data.hpp"
 #include "trajectory_plots.hpp"
 #include "fitter.hpp"
-#include "trajectory.hpp"
-#include "sqrtlog.hpp"
+#include "trajectories/iterative.hpp"
 
 void iterations()
 {   
     using namespace analyticRT;
 
-    trajectory alpha = new_trajectory<sqrtlog>(4.*M2_PION);
+    trajectory alpha = new_trajectory<iterative>(4.*M2_PION);
     alpha->set_option(2);
     
     std::vector<double> pars = {0.518428815, 1.05828109, 0.831810124, 0.444322125};

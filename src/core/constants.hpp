@@ -79,6 +79,24 @@ namespace analyticRT
         return XR*i - c;
     };
 
+    inline bool operator == (const complex &z,const int n)
+    {
+        return (z == static_cast<double> (n));
+    }
+    inline bool operator == (const int n, const complex &z)
+    {
+        return (z == static_cast<double> (n));
+    }
+    inline bool operator != (const complex &z,const int n)
+    {
+        return (z != static_cast<double> (n));
+    }
+    inline bool operator != (const int n, const complex &z)
+    {
+        return (z != static_cast<double> (n));
+    }
+
+
     // This makes it so we always default to complex regardless of whether the input is an int or double
     template<typename T>
     complex csqrt(T x){ return sqrt(x * XR); };
@@ -110,6 +128,7 @@ namespace analyticRT
     const double M_RHO       = 0.77526;
     const double M_OMEGA     = 0.78265;
     const double M_PHI       = 1.01956;
+    const double M_F2        = 1.2754;
     const double M_B1        = 1.229;
     const double M_JPSI      = 3.0969160;
     const double M_PSI2S     = 3.686;
@@ -129,6 +148,7 @@ namespace analyticRT
 
     // Meson masses squared
     const double M2_PION     = M_PION * M_PION;
+    const double M2_KAON     = M_KAON * M_KAON;
     const double M2_JPSI     = M_JPSI * M_JPSI;
     const double M2_D        = M_D * M_D;
     const double M2_DSTAR    = M_DSTAR * M_DSTAR; 

@@ -28,19 +28,11 @@ namespace analyticRT
     // Instead of the constructors of raw_trajectory we use this function
     // to create trajectory pointers which can then be put into amplitudes
     template<class A>
-    trajectory new_trajectory(double R_th, std::string id = "trajectory")
-    {
-        auto traj = std::make_shared<A>(R_th, id);
-        return std::static_pointer_cast<raw_trajectory>(traj);
-    };
-
+    trajectory new_trajectory(std::string id = "trajectory"){ return std::make_shared<A>(4*M2_PION*M2_PION, id); };
     template<class A>
-    trajectory new_trajectory(double R_th, double L_th, std::string id = "trajectory")
-    {
-        auto traj = std::make_shared<A>(R_th, L_th, id);
-        return std::static_pointer_cast<raw_trajectory>(traj);
-    };
-
+    trajectory new_trajectory(double R_th, std::string id = "trajectory"){ return std::make_shared<A>(R_th, id); };
+    template<class A>
+    trajectory new_trajectory(double R_th, double L_th, std::string id = "trajectory"){ return std::make_shared<A>(R_th, L_th, id); };
 
     // Each model must be derived from this virtual class
     class raw_trajectory
@@ -65,7 +57,7 @@ namespace analyticRT
         // Use set_parameters to set free variables
         // this checks that the size is the expected size
         void set_parameters( std::vector<double> pars);
-        inline int Npars(){ return _Npars; };
+        inline int Nfree(){ return _Npars; };
 
         // This function actually distributes paramters to the model and must be specified
         virtual inline void allocate_parameters(std::vector<double> pars){ return; };
@@ -91,7 +83,7 @@ namespace analyticRT
         virtual void iterate(){};
 
         // Output the trajectory from evaluating dispersion relation
-        complex evaluate(double s);
+        virtual complex evaluate(double s);
 
         // Output the real or imaginary parts along real line
         double real_part(double s);
@@ -108,7 +100,7 @@ namespace analyticRT
         inline void set_Npars(int n){ _Npars = n; };
 
         // RHC must always be specified by model
-        virtual double RHC(double s) = 0;
+        virtual double RHC(double s){ return 0.; };
 
         // LHC is optional and will default to 0
         inline virtual double LHC(double s){ return 0.; };

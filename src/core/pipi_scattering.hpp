@@ -1,0 +1,51 @@
+// GKPY [1] parameterizations for pi pi phase-shifts and inelasticities
+// 
+// Author:       Daniel Winney (2023)
+// Affiliation:  Joint Physics Analysis Center (JPAC)
+// Email:        daniel.winney@gmail.com
+// ---------------------------------------------------------------------------
+// REFERENCES 
+// [1] - https://arxiv.org/abs/1102.2183
+// ---------------------------------------------------------------------------
+
+#ifndef PIPI_SCATTERING_HPP
+#define PIPI_SCATTERING_HPP
+
+#include "constants.hpp"
+
+namespace analyticRT
+{
+    class pipi
+    {
+        public: 
+
+        static double phase_shift( int iso, int j, double s);
+        static double inelasticity(int iso, int j, double s);
+        static inline complex partial_wave(int iso, int j, double s)
+        {
+            double delta, eta, k;
+            complex amp;
+
+            k     = elastic_mom(s, 4.*M_PION*M_PION);
+            delta = phase_shift(iso, j, s);
+            eta   = inelasticity(iso, j, s);
+
+            amp  = eta * exp(2.*I*delta) - 1.;
+            amp *= sqrt(s) / (4. * k * I);
+            return amp;
+        };
+
+        private:
+
+        static inline double conformal(double s, double s0)
+        {
+            return (sqrt(s) - sqrt(s0 - s)) / (sqrt(s) + sqrt(s0 - s));
+        };
+        static inline double elastic_mom(double s, double sth)
+        {
+            return sqrt(s - sth) / 2.;
+        };
+    };
+};
+
+#endif

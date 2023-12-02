@@ -10,12 +10,12 @@
 
 namespace analyticRT
 {
-    class sqrtlog : public raw_trajectory
+    class iterative : public raw_trajectory
     {
         public: 
 
         // Explicitly only allow a RHC
-        sqrtlog(double R, std::string id)
+        iterative(double R, std::string id)
         : raw_trajectory(R, id)
         {
             set_Npars(3);
@@ -31,7 +31,7 @@ namespace analyticRT
 
             // Individual couplings
             _coeffs.clear();
-            for (int i = 2; i < Npars(); i++)
+            for (int i = 2; i < Nfree(); i++)
             {
                 _coeffs.push_back(pars[i]);
             }
@@ -46,7 +46,7 @@ namespace analyticRT
         {
             std::vector<std::string> labels = {"alpha(0)", "gamma"};
 
-            for (int i = 2; i < Npars(); i++)
+            for (int i = 2; i < Nfree(); i++)
             {
                 labels.push_back( "c[" + std::to_string(i-1) + "]");
             };

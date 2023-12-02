@@ -11,15 +11,14 @@
 #include "trajectory_data.hpp"
 #include "trajectory_plots.hpp"
 #include "fitter.hpp"
-#include "trajectory.hpp"
-#include "sqrtlog.hpp"
-#include "fiore.hpp"
+#include "trajectories/iterative.hpp"
+#include "trajectories/fiore.hpp"
 
 void fit()
 {   
     using namespace analyticRT;
 
-    trajectory alpha = new_trajectory<sqrtlog>(4.*M2_PION, "Sqrt-Log trajectory");
+    trajectory alpha = new_trajectory<iterative>(4.*M2_PION, "Iterated trajectory");
     alpha->set_option(1);
 
     fitter fitter(alpha);

@@ -10,8 +10,8 @@
 
 #include "trajectory_plots.hpp"
 #include "trajectory.hpp"
-#include "fiore.hpp"
-#include "sqrtlog.hpp"
+#include "trajectories/fiore.hpp"
+#include "trajectories/iterative.hpp"
 
 void results()
 {   
@@ -21,11 +21,10 @@ void results()
     trajectory alpha_fiore = new_trajectory<fiore>(4.*M2_PION);
     alpha_fiore->set_parameters({0.491, 0.140, 0.902, 28.031});
 
-    trajectory alpha = new_trajectory<sqrtlog>(4.*M2_PION);
-    alpha->set_subtraction(0., 0.477);
+    trajectory alpha = new_trajectory<iterative>(4.*M2_PION);
     alpha->set_option(2);
     alpha->max_iterations(3);
-    alpha->set_parameters({1.06038145, 0.72811094, 0.700916037});
+    alpha->set_parameters({0.477, 1.06038145, 0.72811094, 0.700916037});
 
     auto re = [](trajectory alpha)
     {

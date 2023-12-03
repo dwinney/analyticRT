@@ -10,5 +10,6 @@
 #pragma link C++ defined_in "plot.hpp";
 #pragma link C++ defined_in "trajectory.hpp";
 #pragma link C++ defined_in "isobar.hpp";
+#pragma link C++ defined_in "amplitude.hpp";
 
 #endif

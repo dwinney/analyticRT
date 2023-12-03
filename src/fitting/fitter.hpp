@@ -1,4 +1,5 @@
-// Class for taking in data and performing a fit a given trajectory model
+// Abstract fitter class to fit some object (amplitude, isobar, or trajectory) to 
+// some data_set
 //
 // Author:       Daniel Winney (2023)
 // Affiliation:  Joint Physics Analysis Center (JPAC)
@@ -8,7 +9,6 @@
 #ifndef FITTER_HPP
 #define FITTER_HPP
 
-#include "trajectory.hpp"
 #include "data_set.hpp"
 
 #include <chrono>
@@ -22,15 +22,13 @@
 
 namespace analyticRT
 {
-    class fitter; 
-
-    // ---------------------------------------------------------------------------
-    // Structs for storing relevant info inside the fitter
+    class fitter;
 
     // Each free parameter of a model has associated with is a bunch of options
     class parameter
     {
-        private:
+        public:
+
         // Constructor for amplitude variables
         parameter(int i)
         : _i(i), _label(default_label(i))
@@ -48,69 +46,55 @@ namespace analyticRT
         // For iteration fitting save each step
         std::vector<double> _itval, _iterr;
 
-        friend class fitter;
         static inline std::string default_label(int i)
         {
             return "par[" + std::to_string(i) + "]";
         };
     };
 
-    // ---------------------------------------------------------------------------
-    // Actual fitter object
-
-    class fitter
+    class fitter 
     {
         public:
-        
+
         // Basic constructor, only requires amplitude to be fit 
         // uses default settings for minuit
-        fitter(trajectory to_fit)
-        : _trajectory(to_fit),
-          _minuit(ROOT::Math::Factory::CreateMinimizer("Minuit2", "Combined"))
-        {
-            // Populate the _pars vector with the appropriate sized array
-            reset_parameters();
-        };
+        fitter()
+        : _minuit(ROOT::Math::Factory::CreateMinimizer("Minuit2", "Combined"))
+        {};
 
         // Parameterized constructor 
         // with explicit choice of minimization strategy and tolerance of minuit routines
-        fitter(trajectory to_fit, std::string strategy, double tolerance = 1.E-6)
-        : _trajectory(to_fit), _tolerance(tolerance),
+        fitter(std::string strategy, double tolerance = 1.E-6)
+        : _tolerance(tolerance),
           _minuit(ROOT::Math::Factory::CreateMinimizer("Minuit2", strategy))
-        {
-            reset_parameters();
-        };
+        {};
 
         // -----------------------------------------------------------------------
         // Methods to add data to be fit against
 
         // Parse a data set and add it to the fitting pool
         // Currently supported data_types are integrated and differential x-sections
-        void add_data(data_set data);
+        virtual void add_data(data_set data) = 0;
+        // Remove all saved data 
+        virtual void clear_data() = 0;
 
         // OR pass in a whole vector and each one individually
         inline void add_data(std::vector<data_set> data)
         {
-            for (auto set : data)
-            {
-                add_data(set);
-            }
+            for (auto set : data) add_data(set);
         };
-
-        // Remove all saved data 
-        void clear_data();
 
         // -----------------------------------------------------------------------
         // Set limits, labels, and fix parameters
 
         // Reset labels, limits and options on all parameters
-        void reset_parameters();
+        virtual void reset_parameters() = 0;
 
         // Give each parameter a label beyond their default par[i] name
         void set_parameter_labels(std::vector<std::string> labels);
 
         // Set limits and/or a custom stepsize
-        void set_parameter_limits(parameter& par, std::array<double,2> bounds, double step = 0.1);
+        void set_parameter_limits(parameter& par,    std::array<double,2> bounds, double step = 0.1);
         void set_parameter_limits(std::string label, std::array<double,2> bounds, double step = 0.1);
 
         // Indicate a parameter should be fixed to its initial guess value or a fixed val
@@ -154,21 +138,15 @@ namespace analyticRT
         inline double chi2()   { return (_fit) ? _chi2    : -1; };
         inline double chi2dof(){ return (_fit) ? _chi2dof : -1; };
 
-        // Return the pointer to the amp being fit
-        inline trajectory fit_trajectory(){ return _trajectory; };
+        // -----------------------------------------------------------------------
 
-        private:
-
-        // This ptr should point to the trajectory to be fit
-        trajectory _trajectory = nullptr;
+        protected:
 
         // -----------------------------------------------------------------------
         // Data handling
 
         // Total number of data points
         int _N = 0;
-
-        std::vector<data_set> _timelike_data, _spectrum_data; 
 
         // -----------------------------------------------------------------------
         // MINUIT handling 
@@ -185,15 +163,10 @@ namespace analyticRT
 
         // -----------------------------------------------------------------------
         // Calcualtions of chi-squared 
-        
-        // Calculate the chi2 for a given set of parameters, pars, 
-        // from a given timelike or spectrum data set
-        double chi2_timelike( data_set data);
-        double chi2_spectrum(data_set data);
 
         // This is the actual function that gets called by minuit
         // Combined chi2 from all observables and data sets
-        double fit_chi2(const double *pars);
+        virtual double fit_chi2(const double *pars) = 0;
 
         // Save of the last fit run
         bool _fit = false;          // Whether a fit has already been done or not yet
@@ -206,6 +179,14 @@ namespace analyticRT
 
         // -----------------------------------------------------------------------
         // Parameter handling
+
+        // Take a resulting vest fit parameters from a fit and
+        // pass them to the fit object
+        virtual void pass_pars(std::vector<double> pars) = 0;
+
+        // In the case of an iterative fit, this function should do all things
+        // to move to the next iteration step
+        virtual void iterate(){ return; };
 
         // Store of parameter info
         std::vector<parameter> _pars;
@@ -226,11 +207,12 @@ namespace analyticRT
         // Random number generator for creating initial guesses;
         TRandom *_guesser = new TRandom(0);
 
+        
         // -----------------------------------------------------------------------
         // Methods to print out status to command line
 
         // Summary of data sets that have been recieved
-        void data_info();
+        virtual void data_info() = 0;
 
         // Similar summary for parameters
         // Display alongside a vector of current parameter values
@@ -240,6 +222,7 @@ namespace analyticRT
 
         // After a fit return a summary of fit results
         void print_results(bool last_fit = true);
+
     };
 };
 

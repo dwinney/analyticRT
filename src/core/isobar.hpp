@@ -14,6 +14,7 @@
 #include "constants.hpp"
 #include "kinematics.hpp"
 #include "legendre_P.hpp"
+#include <boost/math/quadrature/gauss.hpp>
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 
 namespace analyticRT
@@ -88,7 +89,9 @@ namespace analyticRT
 
         // Set options for different things
         // By default do nothing
-        virtual void set_option(int x){};;
+        virtual void set_option(int x){};
+
+        inline void use_adaptive(bool x){ _adaptive = x; };
 
         // ---------------------------------------------------------------------------
         // Virtual methods 
@@ -142,6 +145,9 @@ namespace analyticRT
         // Basic properties of the amplitude
         std::string _id = "raw_amplitude";  // String id
         int _Nfree = 0;                     // # of free parameters
+
+        // Wheter to use adaptive integration
+        bool _adaptive = false;
     };
 
     // ------------------------------------------------------------------------------

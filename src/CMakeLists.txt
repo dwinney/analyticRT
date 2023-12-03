@@ -1,9 +1,11 @@
 # BUILD LIBRARY 
 file(GLOB SRC "core/*.cpp" 
-              "plotting/*.cpp") 
+              "plotting/*.cpp"
+              "fitting/*.cpp") 
 
 include_directories(core)
 include_directories(plotting)
+include_directories(fitting)
 
 ROOT_GENERATE_DICTIONARY(G__ANALYTICRT
     data_set.hpp
@@ -11,6 +13,7 @@ ROOT_GENERATE_DICTIONARY(G__ANALYTICRT
     plotter.hpp
     trajectory.hpp
     isobar.hpp
+    amplitude.hpp
     LINKDEF ANALYTICRTLinkDef.h
 )
 add_library(ANALYTICRT SHARED ${SRC} G__ANALYTICRT.cxx )

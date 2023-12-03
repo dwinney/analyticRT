@@ -1,65 +1,14 @@
-// Class which allows an amplitude to be fit to data based on chi2 minimization
+// Class for taking in data and performing a fit a given trajectory model
 //
-// ------------------------------------------------------------------------------
 // Author:       Daniel Winney (2023)
-// Affiliation:  Joint Physics Analysis Center (JPAC),
+// Affiliation:  Joint Physics Analysis Center (JPAC)
 // Email:        daniel.winney@gmail.com
-// ------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 #include "fitter.hpp"
 
 namespace analyticRT
 {
-    // -----------------------------------------------------------------------
-    // Methods for managing data
-
-    void fitter::add_data(data_set data)
-    {
-        switch (data._type)
-        {
-            case spectrum:
-            {
-                _spectrum_data.push_back(data); 
-                _N += 2*data._N;
-                break;
-            };
-            case timelike: 
-            {
-                _timelike_data.push_back(data); 
-                _N += data._N;
-                break;
-            };
-            default:
-            {
-                warning("fitter::add_data", "data_set " + data._id + " of unsupported type!");
-                return;
-            }
-        };
-    };
-
-    void fitter::clear_data()
-    {
-        _N = 0;
-        _spectrum_data.clear();
-        _timelike_data.clear();
-    };
-
-    // -----------------------------------------------------------------------
-    // Set limits, labels, and fix parameters
-
-    void fitter::reset_parameters()
-    {
-        _pars.clear();
-        _Nfree = _trajectory->Nfree();
-
-        // populate parameters vector of appropriate size
-        for (int i = 0; i < _trajectory->Nfree(); i++)
-        {
-            _pars.push_back(i);
-        };
-        set_parameter_labels(_trajectory->parameter_labels());
-    };
-
     // Give each parameter a label beyond their default par[i] name
     void fitter::set_parameter_labels(std::vector<std::string> labels)
     {
@@ -85,7 +34,7 @@ namespace analyticRT
         return error("fitter::find_parameter : Cannot find parameter labeled " + label + "!", -1);
     };
 
-    // Set limits and/or a custom stepsize
+        // Set limits and/or a custom stepsize
     void fitter::set_parameter_limits(parameter& par, std::array<double,2> bounds, double step)
     {
         par._custom_limits = true;
@@ -162,74 +111,7 @@ namespace analyticRT
         return result;
     };
 
-    // ---------------------------------------------------------------------------
-    // Chi-squared functions
-
-    // Total chi2, this combines all data sets and is the function that gets called 
-    // by the minimizer
-    double fitter::fit_chi2(const double * cpars)
-    {
-        // First convert the C string to a C++ vector
-        std::vector<double> pars = convert(cpars);
-
-        // Pass parameters to the amplitude
-        _trajectory->set_parameters(pars);
-
-        // Then sum over all data sets and observables
-        double chi2 = 0;
-        for (auto data : _spectrum_data)
-        {
-            chi2 += chi2_spectrum(data);
-        };
-        for (auto data : _timelike_data)
-        {
-            chi2 += chi2_timelike(data);
-        };
-
-        return chi2;
-    };
-
-    // Calculate the chi2 from integrated xsection data
-    double fitter::chi2_spectrum(data_set data)
-    {
-        // Sum over data points
-        double chi2 = 0;
-        for (int i = 0; i < data._N; i++)
-        {
-            double s = pow(data._x[i], 2);
-
-            double spin_th  = _trajectory->real_part(s);
-            double spin_ex  = data._y[i];
-            double spin_err = data._dy[i];
-            chi2 += pow((spin_th - spin_ex)/spin_err, 2);
-
-            double width_th  = _trajectory->width(s);
-            double width_ex  = data._z[i];
-            double width_err = data._dz[i];
-            chi2 += pow((width_th - width_ex)/width_err, 2);
-        };
-
-        return chi2;
-    };
-
-    // Calculate chi2 from differential data set
-    double fitter::chi2_timelike(data_set data)
-    {   
-        double chi2 = 0;
-        for (int i = 0; i < data._N; i++)
-        {
-            double s = data._x[i];
-            double alpha_th =  _trajectory->real_part(s);
-            double alpha_ex = data._y[i];
-            double error    = data._dy[i];
-
-            chi2 += pow((alpha_th - alpha_ex)/error, 2);
-        };
-
-        return chi2;
-    };
-    
-    // ---------------------------------------------------------------------------
+     // ---------------------------------------------------------------------------
     // Load parameter information into minuit
 
     void fitter::set_up(std::vector<double> starting_guess)
@@ -332,9 +214,9 @@ namespace analyticRT
                 _best_errs    = convert(_minuit->Errors());
             };
         };
-
-        // After looping, set the best_pars to the amplitude
-        _trajectory->set_parameters(_best_pars);
+        
+        // After looping, set the best_pars to the amplitude being fit
+        pass_pars(_best_pars);
 
         // And set the global saved pars to the best_fit
         print( "Best fit found after N = " + std::to_string(N) + " iterations" );
@@ -388,7 +270,7 @@ namespace analyticRT
             };
             chi2s.push_back({_minuit->MinValue(), _minuit->MinValue() / (_N - _minuit->NFree())});
 
-            _trajectory->iterate();
+            iterate();
             std::cout << std::left << "Iteration (" + std::to_string(i+1) + "/" + std::to_string(N) + "):" << std::endl;
 
             do_fit(next_pars, false);
@@ -425,35 +307,7 @@ namespace analyticRT
         };
     };
 
-    // ---------------------------------------------------------------------------
-    // Status messages printed to command line
-
-    // Summary of data sets that have been recieved
-    void fitter::data_info()
-    {
-        using std::cout; 
-        using std::left;
-        using std::setw;
-        using std::endl;
-
-        cout << left;
-        divider();
-        cout << "Fitting trajectory (\"" << _trajectory->id() << "\") to " << _N << " data points:" << endl;
-        line();
-        cout << setw(30) << "DATA SET"         << setw(20) << "TYPE"     << setw(10) << "POINTS" << endl;
-        cout << setw(30) << "----------------" << setw(20) << "--------------" << setw(10) << "-------" << endl;
-
-        for (auto data : _spectrum_data)
-        {
-            cout << setw(30) << data._id  << setw(20)  << "Spectrum"   << setw(10) << std::to_string(data._x.size()) + " x 2"  << endl;  
-        };
-        for (auto data : _timelike_data)
-        {   
-            cout << setw(30) << data._id  << setw(20) << "Timelike" << setw(10) << data._x.size() << endl;  
-        };
-    };
-
-    // Print out a little table of the starting values of all the parameters and other set options
+     // Print out a little table of the starting values of all the parameters and other set options
     // Here starting_guess should be of size _Nfree!
     void fitter::parameter_info(std::vector<double> starting_guess)
     {  
@@ -558,8 +412,7 @@ namespace analyticRT
         };
         line(); divider(); line();
         
-        // At the end update the amplitude parameters to include the fit results
-        _trajectory->set_parameters(pars);
+        pass_pars(pars);
 
         _chi2     = chi2;
         _chi2dof  = chi2dof;

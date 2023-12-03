@@ -52,13 +52,11 @@ namespace analyticRT
 
         if (_ignore_cross) return result;
 
-
         // Sum over cross channel pieces
         for (auto isobar : _isobars)
         {
             int ip = isobar->isospin();
             result += C[i][ip] * isobar->cross_projection(j, s);
-            result += C[i][ip] * isobar->cross_projection(j, s) * pow(-1., i + ip);
         };
 
         return result;

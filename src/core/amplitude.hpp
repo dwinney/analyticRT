@@ -21,6 +21,8 @@ namespace analyticRT
     {
         public: 
         
+        amplitude(){};
+
         amplitude(std::vector<isobar> isobars)
         : _isobars(isobars)
         {};
@@ -34,6 +36,9 @@ namespace analyticRT
         // Ability to turn off the cross channel contributions
         inline void ignore_cross(bool x){ _ignore_cross = x; };
 
+        inline void add_isobar(isobar x) { _isobars.push_back(x); };
+        inline void clear_isobars(){ _isobars.clear(); };
+        
         private:
 
         // Constituent isobars

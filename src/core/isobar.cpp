@@ -64,7 +64,8 @@ namespace analyticRT
             return legendre_P(j, z) * this->evaluate(s, z) / 2.;
         };
 
-        return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(dF, -1, 1, 5, 1.E-9, NULL);
+        if (_adaptive) return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(dF, -1, 1, 5, 1.E-9, NULL);
+        return boost::math::quadrature::gauss<double, 15>::integrate(dF, -1, 1);
     };
 
     complex raw_isobar::cross_projection(unsigned int j, double s)
@@ -75,7 +76,8 @@ namespace analyticRT
             return legendre_P(j, z) * this->evaluate(t_man(s, z), z_t(s, z));
         };
 
-        return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(dF, -1, 1, 5, 1.E-9, NULL);
+        if (_adaptive) return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(dF, -1, 1, 5, 1.E-9, NULL);
+        return boost::math::quadrature::gauss<double, 15>::integrate(dF, -1, 1);
     };
 
     // ------------------------------------------------------------------------------

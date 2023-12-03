@@ -29,7 +29,7 @@ namespace analyticRT
     inline double q2(double s){ return Kallen(s, M2, M2)/ 4./ s; };
 
     // Chew-Mandelstam Phase space factor 
-    inline complex rhoCM(double s)
+    inline complex phase_space_CM(double s)
     {
         double m1 = M_PION, m2 = M_PION;
         complex rho, xi;
@@ -42,7 +42,7 @@ namespace analyticRT
     };
 
     // Regular phhase space factor above cut
-    inline double rho(double s){ return (s >= STH) ? sqrt(1. - STH / s) / (16*PI) : 0.; };
+    inline double phase_space(double s){ return (s >= STH) ? sqrt(1. - STH / s) / (16*PI) : 0.; };
 
     // variables from s-channel quantities
     inline  double t_man(double s, double zs){ return -2.*q2(s)*(1. - zs); };

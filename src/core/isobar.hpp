@@ -86,6 +86,10 @@ namespace analyticRT
         // Script-side call to set the parameters
         void set_parameters(std::vector<double> pars);
 
+        // Set options for different things
+        // By default do nothing
+        virtual void set_option(int x){};;
+
         // ---------------------------------------------------------------------------
         // Virtual methods 
 
@@ -119,6 +123,10 @@ namespace analyticRT
         inline void set_Nfree(unsigned int n){ _Nfree = n; };
 
         friend std::vector<isobar> get_isobars(isobar a);
+
+        // Saved option
+        int _option = 0;
+        inline void option_error(){ warning(id() + "::set_option()", "Invalid option recieved! Ignoring..."); };
     
         private:
 

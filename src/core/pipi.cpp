@@ -8,7 +8,7 @@
 // [1] - https://arxiv.org/abs/1102.2183
 // ---------------------------------------------------------------------------
 
-#include "pipi_scattering.hpp"
+#include "pipi.hpp"
 
 namespace analyticRT
 {

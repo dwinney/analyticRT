@@ -5,6 +5,9 @@
 // Email:        daniel.winney@gmail.com
 // ---------------------------------------------------------------------------
 
+#ifndef ITERATIVE
+#define ITERATIVE
+
 #include "trajectory.hpp"
 #include <Math/Interpolator.h>
 
@@ -18,7 +21,7 @@ namespace analyticRT
         iterative(double R, std::string id)
         : raw_trajectory(R, id)
         {
-            set_Npars(3);
+            set_Npars(4);
             initalize();
         };
 
@@ -26,12 +29,13 @@ namespace analyticRT
         inline void allocate_parameters(std::vector<double> pars)
         {
             // Overall coupling
-            set_subtraction(0., pars[0]);
-            _gamma = pars[1]; 
+            _Lam2 = pars[0];
+            set_subtraction(0., pars[1]);
+            _gamma = pars[2]; 
 
             // Individual couplings
             _coeffs.clear();
-            for (int i = 2; i < Nfree(); i++)
+            for (int i = 3; i < Nfree(); i++)
             {
                 _coeffs.push_back(pars[i]);
             }
@@ -44,11 +48,11 @@ namespace analyticRT
 
         inline std::vector<std::string> parameter_labels()
         {
-            std::vector<std::string> labels = {"alpha(0)", "gamma"};
+            std::vector<std::string> labels = {"Lambda^2", "alpha(0)", "gamma"};
 
-            for (int i = 2; i < Nfree(); i++)
+            for (int i = 3; i < Nfree(); i++)
             {
-                labels.push_back( "c[" + std::to_string(i-1) + "]");
+                labels.push_back( "c[" + std::to_string(i-2) + "]");
             };
 
             return labels;
@@ -58,7 +62,7 @@ namespace analyticRT
         inline void set_option(int n)
         {
             _coeffs.clear();
-            set_Npars(n + 2);
+            set_Npars(n + 3);
         };
 
         protected:
@@ -72,11 +76,11 @@ namespace analyticRT
             // For numerical stability, at asymptotic argumenets, simplify the equation
             if (s > 100)
             {
-                return (_gamma / PI) *  (previousRePart() * log(xi()) + log(beta()));
+                return (_gamma / PI) *  (previousRePart() * log(q2hat()) + log(beta()));
             }
 
             // else use the Full expression
-            return (_gamma / PI) *  log(1. + (PI / _gamma) * rho() * beta() * pow(xi(), previousRePart()) );
+            return (_gamma / PI) *  log(1. + (PI / _gamma) * rho() * beta() * pow(q2hat(), previousRePart()) );
         };
 
         private:
@@ -91,10 +95,10 @@ namespace analyticRT
         std::vector<double> _coeffs; // (Real) coefficients of abitrary beta function inside the logarithm
 
         // xi is the ratio of momenta squared over momenta evaluated at some scale s = Lambda^2
-        inline double xi(){ return (_s - _sRHC) / (_Lam2 - _sRHC); };
+        inline double q2hat(){ return (_s - _sRHC) / 4. / _Lam2; };
 
         // Phase space factor
-        inline double rho(){ return sqrt(1. - _sRHC / _s); }
+        inline double rho(){ return sqrt(1. - _sRHC / _s) / (16.*PI); }
 
         // Arbitrary rational function entering the coupling at low energies    
         inline double beta()
@@ -171,3 +175,5 @@ namespace analyticRT
         };
     };
 };
+
+#endif

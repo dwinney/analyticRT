@@ -7,6 +7,9 @@
 // Email:        daniel.winney@gmail.com
 // ---------------------------------------------------------------------------
 
+#ifndef TRUNCATED_HPP
+#define TRUNCATED_HPP
+
 #include "isobar.hpp"
 #include "trajectory.hpp"
 #include "hyp_2F1.hpp"
@@ -63,3 +66,5 @@ namespace analyticRT
 
     };
 };
+
+#endif

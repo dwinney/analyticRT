@@ -8,6 +8,9 @@
 // [1] arXiv:hep-ph/0011035
 // ---------------------------------------------------------------------------
 
+#ifndef FIORE_HPP
+#define FIORE_HPP
+
 #include "trajectory.hpp"
 
 namespace analyticRT
@@ -80,3 +83,5 @@ namespace analyticRT
         };
     };
 };
+
+#endif

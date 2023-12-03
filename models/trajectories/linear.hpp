@@ -5,6 +5,9 @@
 // Email:        daniel.winney@gmail.com
 // ---------------------------------------------------------------------------
 
+#ifndef LINEAR_HPP
+#define LINEAR_HPP
+
 #include "trajectory.hpp"
 #include "kinematics.hpp"
 
@@ -46,3 +49,5 @@ namespace analyticRT
 
     };
 };
+
+#endif

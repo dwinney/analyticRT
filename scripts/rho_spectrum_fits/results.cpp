@@ -22,9 +22,9 @@ void results()
     alpha_fiore->set_parameters({0.491, 0.140, 0.902, 28.031});
 
     trajectory alpha = new_trajectory<iterative>(4.*M2_PION);
-    alpha->set_option(2);
+    alpha->set_option(1);
     alpha->max_iterations(3);
-    alpha->set_parameters({0.477, 1.06038145, 0.72811094, 0.700916037});
+    alpha->set_parameters({1.0, 0.532629947, 1.04260251, 43.4117231});
 
     auto re = [](trajectory alpha)
     {

@@ -19,9 +19,9 @@ void iterations()
     using namespace analyticRT;
 
     trajectory alpha = new_trajectory<iterative>(4.*M2_PION);
-    alpha->set_option(2);
+    alpha->set_option(1);
     
-    std::vector<double> pars = {0.518428815, 1.05828109, 0.831810124, 0.444322125};
+    std::vector<double> pars = {1.0, 0.532629947, 1.04260251, 43.4117231};
 
     // Curves to be plotted below
     auto realpha = [alpha](double s)

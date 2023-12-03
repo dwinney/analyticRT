@@ -5,6 +5,9 @@
 // Email:        daniel.winney@gmail.com
 // ---------------------------------------------------------------------------
 
+#ifndef BREIT_WIGNER_HPP
+#define BREIT_WIGNER_HPP
+
 #include "isobar.hpp"
 #include "legendre_P.hpp"
 
@@ -42,3 +45,5 @@ namespace analyticRT
         double _g = 1., _mass = 0., _width = 0.;
     };
 };
+
+#endif

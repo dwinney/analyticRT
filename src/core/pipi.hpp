@@ -8,8 +8,8 @@
 // [1] - https://arxiv.org/abs/1102.2183
 // ---------------------------------------------------------------------------
 
-#ifndef PIPI_SCATTERING_HPP
-#define PIPI_SCATTERING_HPP
+#ifndef PIPI_HPP
+#define PIPI_HPP
 
 #include "constants.hpp"
 

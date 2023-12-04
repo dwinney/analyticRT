@@ -12,6 +12,7 @@
 #define PIPI_HPP
 
 #include "constants.hpp"
+#include "kinematics.hpp"
 
 namespace analyticRT
 {
@@ -27,11 +28,11 @@ namespace analyticRT
             complex amp;
 
             k     = elastic_mom(s, 4.*M_PION*M_PION);
-            delta = phase_shift(iso, j, s);
+            delta = phase_shift( iso, j, s);
             eta   = inelasticity(iso, j, s);
 
-            amp  = eta * exp(2.*I*delta) - 1.;
-            amp *= sqrt(s) / (4. * k * I);
+            amp  = (eta * exp(2.*I*delta) - 1.) / (2.*I);
+            amp /= phase_space(s) * (16.*PI);
             return amp;
         };
 

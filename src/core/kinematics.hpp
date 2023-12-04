@@ -50,7 +50,7 @@ namespace analyticRT
 
 
     // Cross channel angles
-    inline double z(double s, double t, double u){ return s*(t - u)/Kallen(s, M2, M2); };
+    inline double z(double s, double t, double u){ return (t - u)/ (s - STH); };
     inline double z_t(double s, double zs){ return z(t_man(s, zs), s, u_man(s, zs)); };
     inline double z_u(double s, double zs){ return z(u_man(s, zs), t_man(s, zs), s); };
 };

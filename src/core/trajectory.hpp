@@ -28,7 +28,7 @@ namespace analyticRT
     // Instead of the constructors of raw_trajectory we use this function
     // to create trajectory pointers which can then be put into amplitudes
     template<class A>
-    trajectory new_trajectory(std::string id = "trajectory"){ return std::make_shared<A>(4*M2_PION*M2_PION, id); };
+    trajectory new_trajectory(std::string id = "trajectory"){ return std::make_shared<A>(4*M2_PION, id); };
     template<class A>
     trajectory new_trajectory(double R_th, std::string id = "trajectory"){ return std::make_shared<A>(R_th, id); };
     template<class A>

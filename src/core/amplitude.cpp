@@ -18,10 +18,7 @@ namespace analyticRT
 
         // Sum over direct channel pieces
         complex result = 0.;
-        for (auto isobar : _isobars)
-        {
-            if (isobar->isospin() == i) result += isobar->evaluate(s, zs);
-        };
+        for (auto isobar : _isobars) if (isobar->isospin() == i) result += isobar->evaluate(s, zs);
 
         if (_ignore_cross) return result;
 
@@ -45,19 +42,12 @@ namespace analyticRT
 
         // Sum over direct channel pieces
         complex result = 0.;
-        for (auto isobar : _isobars)
-        {
-            if (isobar->isospin() == i) result += isobar->direct_projection(j, s);
-        };
+        for (auto isobar : _isobars) if (isobar->isospin() == i) result += isobar->direct_projection(j, s);
 
         if (_ignore_cross) return result;
 
         // Sum over cross channel pieces
-        for (auto isobar : _isobars)
-        {
-            int ip = isobar->isospin();
-            result += C[i][ip] * isobar->cross_projection(j, s);
-        };
+        for (auto isobar : _isobars) result += C[i][isobar->isospin()] * isobar->cross_projection(j, s);
 
         return result;
     };

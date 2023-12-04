@@ -24,7 +24,7 @@ void fit()
     spectrum_fitter fitter(alpha);
     fitter.add_data( isovector_spectrum() );
     
-    fitter.fix_parameter("Lambda^2", 1.);
+    fitter.fix_parameter("Lambda^2", 1.1);
     fitter.set_parameter_limits("alpha(0)", {0.,  1  });
     fitter.set_parameter_limits("gamma",    {0.1, 2. });
     fitter.set_parameter_limits("c[1]",     {0.,  300.});

@@ -18,11 +18,9 @@ namespace analyticRT
     {
         public: 
 
-        // Explicitly only allow a RHC
         hypergeometric(key x, unsigned int isospin, trajectory alpha, std::string id)
         : raw_isobar(x, isospin, id), _alpha(alpha)
         {
-            // NO free parameters
             set_Nfree(2);
         };
 

@@ -45,9 +45,19 @@ namespace analyticRT
         : _sRHC(R_threshold),  _hasLHC(false), _id(id)
         {};
 
+        // Constructor with only a RHC
+        raw_trajectory(double R_threshold, int N, std::string id)
+        : _sRHC(R_threshold),  _hasLHC(false), _id(id), _Npars(N)
+        {};
+
         // Constructor specifying both thresholds
         raw_trajectory(double R_threshold, double L_threshold, std::string id)
         : _sRHC(R_threshold), _sLHC(L_threshold), _hasLHC(true), _id(id)
+        {};
+
+        // Constructor specifying both thresholds
+        raw_trajectory(double R_threshold, double L_threshold, int N, std::string id)
+        : _sRHC(R_threshold), _sLHC(L_threshold), _hasLHC(true), _id(id), _Npars(N)
         {};
 
         // Public getters and setters

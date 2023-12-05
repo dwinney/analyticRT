@@ -1,68 +1,41 @@
-// Trajectory with a sqrt-log asymptotic
+// Trajectory with a sqrt-log asymptotic but which is exactly
+// unitarizable at lowest PW
 //
 // Author:       Daniel Winney (2023)
 // Affiliation:  Joint Physics Analysis Center (JPAC)
 // Email:        daniel.winney@gmail.com
 // ---------------------------------------------------------------------------
 
-#ifndef ITERATIVE
-#define ITERATIVE
+#ifndef UNITARY_HPP
+#define UNITARY_HPP
 
-#include "trajectory.hpp"
-#include <Math/Interpolator.h>
+#include "iterative.hpp"
 
 namespace analyticRT
 {
-    class iterative : public raw_trajectory
+    class unitary : public raw_trajectory
     {
-        public: 
+        public:
 
-        // Explicitly only allow a RHC
-        iterative(double R, std::string id)
-        : raw_trajectory(R, 4, id)
-        {
-            initalize();
-        };
+        unitary(double R, int jmin, std::string id)
+        : raw_trajectory(R, 4, id), _jmin(jmin)
+        { initalize(); };
 
+        protected:
+        
         // Parameters are the scale and beta coefficients
         inline void allocate_parameters(std::vector<double> pars)
         {
             // Overall coupling
-            _Lam2 = pars[0];
-            set_subtraction(0., pars[1]);
-            _gamma = pars[2]; 
+            set_subtraction(0., pars[0]);
+            _Lam2  = pars[1];
+            _g     = pars[2]; 
+            _gamma = pars[3]; 
 
-            // Individual couplings
-            _coeffs.clear();
-            for (int i = 3; i < Nfree(); i++)
-            {
-                _coeffs.push_back(pars[i]);
-            }
-
-            for (int i = 0; i < _Niters; i++)
-            {
-                iterate();
-            };
+            for (int i = 0; i < _Niters; i++) iterate();
         };
 
-        inline std::vector<std::string> parameter_labels()
-        {
-            std::vector<std::string> labels = {"Lambda^2", "alpha(0)", "gamma"};
-
-            for (int i = 3; i < Nfree(); i++)
-            {
-                labels.push_back( "c[" + std::to_string(i-2) + "]");
-            };
-
-            return labels;
-        };
-
-        // The option is how many terms to consider in the polynomial
-        inline void set_option(int n)
-        {
-            _coeffs.clear();
-            set_Npars(n + 3);
-        };
+        inline std::vector<std::string> parameter_labels(){ return {"alpha(0)", "Lambda^2", "g", "gamma"}; };
 
         protected:
 
@@ -73,23 +46,19 @@ namespace analyticRT
             _s = s; // save so we can call it from anywhere 
 
             // For numerical stability, at asymptotic argumenets, simplify the equation
-            if (s > 100)
-            {
-                return (_gamma / PI) *  (previousRePart() * log(q2hat()) + log(beta()));
-            }
+            if (s > 100) return gamma()*(RePart()*log(q2hat()) + log(beta()/gamma()));
 
-            // else use the Full expression
-            return (_gamma / PI) *  log(1. + (PI / _gamma) * rho() * beta() * pow(q2hat(), previousRePart()) );
+            return gamma()* log(1. + rho()* beta()/gamma() * (1. + pow(q2hat(), RePart())));
         };
 
         // Save s at each evaluation step to not have to pass it around to each subfunction
         double _s;
 
         // Members related to the model for the imaginary part along the RHC
-
-        double _Lam2  = 5.;          // Scale of elastic unitarity
-        double _gamma = 1.;          // Overall coupling
-        std::vector<double> _coeffs; // (Real) coefficients of abitrary beta function inside the logarithm
+        int    _jmin  = 1;           // Lowest physical partial wave 
+        double _Lam2  = 1.;          // Scale of elastic unitarity
+        double _g = 1., _gamma = 1.; // Overall nearthreshold and high energy couplings
+        double _delta = 0.1;
 
         // xi is the ratio of momenta squared over momenta evaluated at some scale s = Lambda^2
         inline double q2hat(){ return (_s - _sRHC) / 4. / _Lam2; };
@@ -97,16 +66,9 @@ namespace analyticRT
         // Phase space factor
         inline double rho(){ return sqrt(1. - _sRHC / _s) / (16.*PI); }
 
-        // Arbitrary rational function entering the coupling at low energies    
-        inline double beta()
-        {
-            double beta = 0;
-            for (int i = 0; i < _coeffs.size(); i++)
-            {
-                beta += _coeffs[i] * pow(_s - _sRHC, i);
-            };
-            return beta;
-        };
+        // Beta is the residue of the lowest physical partial wave
+        inline double beta() { return _g / (2.*_jmin + 1.) * pow(q2hat(), _jmin); };
+        inline double gamma(){ return _gamma / PI; };
 
         // Methods related to the interpolation of the real part 
         
@@ -118,10 +80,7 @@ namespace analyticRT
         double _sAsym = 200, _ReAlphaAsym;
 
         // Evaluate the last saved iteration of the real part
-        inline double previousRePart()
-        {
-            return (_s < _sAsym) ? _ReAlphaInterp.Eval(_s) : _ReAlphaAsym * sqrt(_s / _sAsym);
-        };
+        inline double RePart(){ return (_s < _sAsym) ? _ReAlphaInterp.Eval(_s) : _ReAlphaAsym * sqrt(_s / _sAsym); };
 
         // Replace prevously saved interpolation by evaluating the DR
         inline void iterate()

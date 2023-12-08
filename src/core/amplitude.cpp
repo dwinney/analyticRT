@@ -12,7 +12,7 @@
 
 namespace analyticRT
 {
-    complex amplitude::evaluate(unsigned int i, double s, double zs)
+    complex raw_amplitude::direct_channel(unsigned int i, double s, double zs)
     {
         if (i > 2) return std::nan("");
 
@@ -20,12 +20,20 @@ namespace analyticRT
         complex result = 0.;
         for (auto isobar : _isobars) if (isobar->isospin() == i) result += isobar->evaluate(s, zs);
 
-        if (_ignore_cross) return result;
+        return result;
+    };
+
+
+    complex raw_amplitude::cross_channels(unsigned int i, double s, double zs)
+    {
+        if (i > 2) return std::nan("");
+        if (_ignore_cross) return 0.;
 
         double t = t_man(s, zs), zt = z_t(s, zs);
         double u = u_man(s, zs), zu = z_u(s, zs);
 
         // Sum over cross channel pieces
+        complex result = 0.;
         for (auto isobar : _isobars)
         {
             int ip = isobar->isospin();
@@ -36,7 +44,7 @@ namespace analyticRT
         return result;
     };
 
-    complex amplitude::partial_wave(unsigned int i, unsigned int j, double s)
+    complex raw_amplitude::direct_projection(unsigned int i, unsigned int j, double s)
     {
         if (i > 2) return std::nan("");
 
@@ -44,9 +52,16 @@ namespace analyticRT
         complex result = 0.;
         for (auto isobar : _isobars) if (isobar->isospin() == i) result += isobar->direct_projection(j, s);
 
-        if (_ignore_cross) return result;
+        return result;
+    };
+
+    complex raw_amplitude::cross_projection(unsigned int i, unsigned int j, double s)
+    {
+        if (i > 2) return std::nan("");
+        if (_ignore_cross) return 0;
 
         // Sum over cross channel pieces
+        complex result = 0.;
         for (auto isobar : _isobars) result += C[i][isobar->isospin()] * isobar->cross_projection(j, s);
 
         return result;

@@ -16,7 +16,8 @@
 namespace analyticRT
 {
     class raw_isobar;
-
+    class raw_amplitude;
+    
     class key
     {
         private:
@@ -34,6 +35,11 @@ namespace analyticRT
         friend std::shared_ptr<raw_isobar> new_isobar(B, C, D);
         template<class A, class B, class C, class D, class E>
         friend std::shared_ptr<raw_isobar> new_isobar(B, C, D, E);
+
+        friend std::shared_ptr<raw_amplitude> new_amplitude(std::string);
+        template<class A>
+        friend std::shared_ptr<raw_amplitude> new_amplitude(A, std::string);
+
     };
 };
 

@@ -29,10 +29,14 @@ namespace analyticRT
     // to create trajectory pointers which can then be put into amplitudes
     template<class A>
     trajectory new_trajectory(std::string id = "trajectory"){ return std::make_shared<A>(4*M2_PION, id); };
-    template<class A>
-    trajectory new_trajectory(double R_th, std::string id = "trajectory"){ return std::make_shared<A>(R_th, id); };
-    template<class A>
-    trajectory new_trajectory(double R_th, double L_th, std::string id = "trajectory"){ return std::make_shared<A>(R_th, L_th, id); };
+    template<class A, class B>
+    trajectory new_trajectory(double R_th, B b){ return std::make_shared<A>(R_th, b); };
+    template<class A, class B, class C>
+    trajectory new_trajectory(double R_th, B b, C c){ return std::make_shared<A>(R_th, b, c); };
+    template<class A, class B, class C, class D>
+    trajectory new_trajectory(double R_th, B b, C c, D d){ return std::make_shared<A>(R_th, b, c, d); };
+    template<class A, class B, class C, class D, class E>
+    trajectory new_trajectory(double R_th, B b, C c, D d, E e){ return std::make_shared<A>(R_th, b, c, d, e); };
 
     // Each model must be derived from this virtual class
     class raw_trajectory

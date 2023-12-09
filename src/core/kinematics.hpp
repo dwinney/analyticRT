@@ -25,8 +25,8 @@ namespace analyticRT
     };
 
     // CM momentum
-    inline double q(double s){  return (s >= 4*M2*M2) ? sqrt(Kallen(s, M2, M2))/ 2./ sqrt(s) : NaN<double>(); };
-    inline double q2(double s){ return Kallen(s, M2, M2)/ 4./ s; };
+    inline double q(double s){  return (s >= 4*M2) ? sqrt(Kallen(s, M2, M2))/ 2./ sqrt(s) : NaN<double>(); };
+    inline double q2(double s){ return (s - 4.*M2)/ 4.; };
 
     // Chew-Mandelstam Phase space factor 
     inline complex phase_space_CM(double s)

@@ -9,7 +9,8 @@
 #ifndef UNITARY_HPP
 #define UNITARY_HPP
 
-#include "iterative.hpp"
+#include "amplitude.hpp"
+#include "trajectory.hpp"
 
 namespace analyticRT
 {
@@ -17,8 +18,8 @@ namespace analyticRT
     {
         public:
 
-        unitary(double R, int jmin, std::string id)
-        : raw_trajectory(R, 4, id), _jmin(jmin)
+        unitary(double R, int jmin, amplitude amp, std::string id)
+        : raw_trajectory(R, 4, id), _jmin(jmin), _amp(amp)
         { initalize(); };
 
         protected:
@@ -28,10 +29,10 @@ namespace analyticRT
         {
             // Overall coupling
             set_subtraction(0., pars[0]);
-            _Lam2  = pars[1];
+            _Lam2  = pars[1]; _sLam2 = (4*_Lam2 + STH)/2;
             _g     = pars[2]; 
             _gamma = pars[3]; 
-
+            
             for (int i = 0; i < _Niters; i++) iterate();
         };
 
@@ -39,15 +40,19 @@ namespace analyticRT
 
         protected:
 
+        // For unitarization when including cross-channels we need a pointer to the full
+        // amplitude
+        amplitude _amp = nullptr;
+
         // RHC given by a simple square root 
         inline double RHC(double s)
         {
-            if (s < _sRHC) return 0.;
+            if (s < _sRHC + EPS) return 0.;
             _s = s; // save so we can call it from anywhere 
 
             // For numerical stability, at asymptotic argumenets, simplify the equation
             if (s > 100) return gamma()*(RePart()*log(q2hat()) + log(beta()/gamma()));
-
+            
             return gamma()* log(1. + rho()* beta()/gamma() * (1. + pow(q2hat(), RePart())));
         };
 
@@ -55,10 +60,9 @@ namespace analyticRT
         double _s;
 
         // Members related to the model for the imaginary part along the RHC
-        int    _jmin  = 1;           // Lowest physical partial wave 
-        double _Lam2  = 1.;          // Scale of elastic unitarity
-        double _g = 1., _gamma = 1.; // Overall nearthreshold and high energy couplings
-        double _delta = 0.1;
+        int    _jmin  = 1;               // Lowest physical partial wave 
+        double _Lam2  = 3., _sLam2 = 5.; // Scale of elastic unitarity
+        double _g     = 1., _gamma = 1.; // Overall nearthreshold and high energy couplings
 
         // xi is the ratio of momenta squared over momenta evaluated at some scale s = Lambda^2
         inline double q2hat(){ return (_s - _sRHC) / 4. / _Lam2; };
@@ -67,26 +71,42 @@ namespace analyticRT
         inline double rho(){ return sqrt(1. - _sRHC / _s) / (16.*PI); }
 
         // Beta is the residue of the lowest physical partial wave
-        inline double beta() { return _g / (2.*_jmin + 1.) * pow(q2hat(), _jmin); };
         inline double gamma(){ return _gamma / PI; };
+        inline double beta() 
+        {
+            double r = _g / (2.*_jmin + 1.) * pow(q2hat(), _jmin);
+            complex alpha = RePart() - I*ImPart();
+            return r * std::norm(1. + (_jmin - alpha)/r*Ftilde()); 
+        };
 
+        //--------------------------------------------------------------------------------------------------------
         // Methods related to the interpolation of the real part 
         
         // For relatively small arguments, save an interpolation of the real part evaluated from DR
         int _Ninterp = 100; // Total interpolation will have 2*_Ninterp points
         ROOT::Math::Interpolator _ReAlphaInterp = ROOT::Math::Interpolator(2*_Ninterp, ROOT::Math::Interpolation::kCSPLINE);
+        ROOT::Math::Interpolator _ImAlphaInterp = ROOT::Math::Interpolator(  _Ninterp, ROOT::Math::Interpolation::kCSPLINE);
 
         // Or at asymptotic arguments we match to a simple square-root
-        double _sAsym = 200, _ReAlphaAsym;
+        double _sAsym = 200, _ReAlphaAsym, _ImAlphaAsym;
 
         // Evaluate the last saved iteration of the real part
         inline double RePart(){ return (_s < _sAsym) ? _ReAlphaInterp.Eval(_s) : _ReAlphaAsym * sqrt(_s / _sAsym); };
+        inline double ImPart(){ return (_s < _sLam2) ? _ImAlphaInterp.Eval(_s) : _ImAlphaAsym; };
 
+        //--------------------------------------------------------------------------------------------------------
+        // Methods related to the interpolation of cross channel contributions
+        double _fTildeAsym = 0.;
+        ROOT::Math::Interpolator _ftildeInterp = ROOT::Math::Interpolator(_Ninterp, ROOT::Math::Interpolation::kCSPLINE);
+
+        inline double Ftilde(){ return (_s < _sLam2) ? _ftildeInterp.Eval(_s) : _fTildeAsym; };
+
+        //--------------------------------------------------------------------------------------------------------
         // Replace prevously saved interpolation by evaluating the DR
         inline void iterate()
         {
+            // Save an interpolation of the real part using previous iteration
             std::vector<double> s, realpha;
-
             // Near threshold, (s < s1) we use a lot of points
             double s1 = 50;
             for (int i = 0; i < _Ninterp; i++)
@@ -104,30 +124,59 @@ namespace analyticRT
                 double rei = real_part(si);
                 s.push_back(si); realpha.push_back(rei);
             };
-        
+
+            // Also save an interpolation of the cross-channel components
+            // from sRHC to the scale lambda2
+            std::vector<double> ss, ftilde, imalpha;
+            for (int i = 0; i < _Ninterp; i++)
+            {
+                double si  = _sRHC + (_sLam2 - _sRHC) * double(i) / double(_Ninterp-1); 
+                double fti =  (si < _sLam2) ? std::real(_amp->cross_projection(_jmin, _jmin, si))
+                                            : std::real(_amp->cross_projection(_jmin, _jmin, _sLam2) );
+                double imi = RHC(si);
+                ss.push_back(si); ftilde.push_back(fti); imalpha.push_back(imi);
+            }
+
+            // Load everything to the correct interpolators     
             _ReAlphaAsym = real_part(_sAsym);
             _ReAlphaInterp.SetData(s, realpha);
+            _ImAlphaAsym = imalpha.back();
+            _ImAlphaInterp.SetData(ss, imalpha);
+            _fTildeAsym  = ftilde.back();
+            _ftildeInterp.SetData(ss, ftilde);
         };
 
         inline void initalize()
         {
+            // Load inital interpolation of the Re alpha(s)
+
              // The "zeroth" iteration, using the linear rho trajectory as an ansatz
             auto initial_guess = [] (double s)
             {
                 return (0.5 + 0.9 * s) / sqrt(1. + s / 20); 
             };
             
-            std::vector<double> s, realpha;
+            std::vector<double> s, realpha, zeros;
 
             for (int i = 0; i < 2*_Ninterp; i++)
             {
-                double si  = _sRHC + (_sAsym - _sRHC) * double(i) / double(_Ninterp-1); 
+                double si  = _sRHC + (_sAsym - _sRHC) * double(i) / double(2.*_Ninterp-1); 
                 double rei = initial_guess(si);
                 s.push_back(si); realpha.push_back(rei);
             };
             
             _ReAlphaAsym = initial_guess(_sAsym);
             _ReAlphaInterp.SetData(s, realpha);
+
+            // The "zero-th" iteration assumes zero cross channel contribution
+            s.clear();
+            for (int i = 0; i < _Ninterp; i++)
+            {
+                double si  = _sRHC + (_sLam2 - _sRHC) * double(i) / double(_Ninterp-1); 
+                s.push_back(si); zeros.push_back(0.);
+            };
+            _ImAlphaInterp.SetData(s, zeros);
+            _ftildeInterp.SetData( s, zeros);
         };
     };
 };

@@ -96,10 +96,10 @@ namespace analyticRT
 
         //--------------------------------------------------------------------------------------------------------
         // Methods related to the interpolation of cross channel contributions
-        double _fTildeAsym = 0.;
+        double _fTildeAsym = 0., _sMatch = 0;
         ROOT::Math::Interpolator _ftildeInterp = ROOT::Math::Interpolator(_Ninterp, ROOT::Math::Interpolation::kCSPLINE);
 
-        inline double Ftilde(){ return (_s < _sLam2) ? _ftildeInterp.Eval(_s) : _fTildeAsym; };
+        inline double Ftilde(){ return (_s < _sMatch) ? _ftildeInterp.Eval(_s) : _fTildeAsym; };
 
         //--------------------------------------------------------------------------------------------------------
         // Replace prevously saved interpolation by evaluating the DR
@@ -140,10 +140,12 @@ namespace analyticRT
             // Load everything to the correct interpolators     
             _ReAlphaAsym = real_part(_sAsym);
             _ReAlphaInterp.SetData(s, realpha);
-            _ImAlphaAsym = imalpha.back();
-            _ImAlphaInterp.SetData(ss, imalpha);
-            _fTildeAsym  = ftilde.back();
-            _ftildeInterp.SetData(ss, ftilde);
+            _ImAlphaAsym = imalpha.back(); _fTildeAsym  = ftilde.back();
+
+            _sMatch = ss.back() + 0.1;
+            ss.push_back(_sMatch); 
+            imalpha.push_back(_ImAlphaAsym);     ftilde.push_back(_fTildeAsym);
+            _ImAlphaInterp.SetData(ss, imalpha); _ftildeInterp.SetData(ss, ftilde);
         };
 
         inline void initalize()
@@ -175,8 +177,8 @@ namespace analyticRT
                 double si  = _sRHC + (_sLam2 - _sRHC) * double(i) / double(_Ninterp-1); 
                 s.push_back(si); zeros.push_back(0.);
             };
-            _ImAlphaInterp.SetData(s, zeros);
-            _ftildeInterp.SetData( s, zeros);
+            
+            _ImAlphaInterp.SetData(s, zeros); _ftildeInterp.SetData( s, zeros);
         };
     };
 };

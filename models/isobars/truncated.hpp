@@ -77,6 +77,30 @@ namespace analyticRT
         int _nmax       = 1;  // Max spin to include in sum
         double _g       = 1.; // Coupling
         double _lambda2 = 1.; // Scale Lambda^2
+    };
+
+    // Same thing as above but with the l = 0 pole removed
+    class no_swave : public truncated
+    {
+        public: 
+        
+        no_swave(key x, unsigned int isospin, int nmax, trajectory alpha, std::string id)
+        : truncated(x, isospin, nmax, alpha, id)
+        {};
+
+        // Evaluate the full term with angular dependence
+        complex evaluate(double s, double zs)
+        {
+            complex as = _alpha->evaluate(s);
+            double q2hat = q2(s) / _lambda2;
+
+            complex sum = 0;
+            for (int n = 1; n <= _nmax; n++) 
+            { 
+                if (((n + isospin()) % 2) == 0) sum += pow(q2hat*zs, n) / (n - as);
+            };
+            return _g * sum;
+        };
 
     };
 };

@@ -151,13 +151,7 @@ namespace analyticRT
         };
 
         inline void initalize()
-        {
-             // The "zeroth" iteration, using the linear rho trajectory as an ansatz
-            auto initial_guess = [] (double s)
-            {
-                return (0.5 + 0.9 * s) / sqrt(1. + s / 20); 
-            };
-            
+        {            
             std::vector<double> s, realpha;
 
             for (int i = 0; i < 2*_Ninterp; i++)

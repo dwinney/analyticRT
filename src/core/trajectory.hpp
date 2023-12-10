@@ -102,6 +102,7 @@ namespace analyticRT
         inline void set_initial_guess(std::array<double,2> alpha, double mu2 = 20) 
         {
             _azInitial = alpha[0]; _apInitial = alpha[1]; _mu2 = mu2;
+            this->initialize();
         };
         inline double initial_guess(double s){ return (_azInitial + _apInitial * s) / sqrt(1. + s / _mu2); };
 
@@ -114,6 +115,8 @@ namespace analyticRT
 
         // -------------------------------------------------------------------
         protected:
+
+        virtual void initialize(){};
 
         // Change number of expected parameters
         // We dont want this changing outside of the class itself

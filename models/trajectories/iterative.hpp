@@ -21,7 +21,7 @@ namespace analyticRT
         iterative(double R, std::string id)
         : raw_trajectory(R, 4, id)
         {
-            initalize();
+            initialize();
         };
 
         // Parameters are the scale and beta coefficients
@@ -150,14 +150,14 @@ namespace analyticRT
             _ReAlphaInterp.SetData(s, realpha);
         };
 
-        inline void initalize()
+        inline void initialize()
         {            
             std::vector<double> s, realpha;
 
             for (int i = 0; i < 2*_Ninterp; i++)
             {
                 double si  = _sRHC + (_sAsym - _sRHC) * double(i) / double(_Ninterp-1); 
-                double rei = initial_guess(si);
+                double rei = this->initial_guess(si);
                 s.push_back(si); realpha.push_back(rei);
             };
             

@@ -50,6 +50,8 @@ namespace analyticRT
         // Remove all saved data 
         void clear_data();
 
+        void ignore_widths(bool x){ _ignore_widths = x; };
+
         protected:
 
         // This ptr should point to the trajectory to be fit
@@ -79,7 +81,7 @@ namespace analyticRT
         // Combined chi2 from all observables and data sets
         double fit_chi2(const double *pars);
 
-
+        bool _ignore_widths = false;
     };
 };
 

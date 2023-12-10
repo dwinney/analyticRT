@@ -18,9 +18,13 @@ namespace analyticRT
     {
         public:
 
+        unitary(double R, int jmin, std::string id)
+        : raw_trajectory(R, 4, id), _jmin(jmin)
+        { initialize(); };
+
         unitary(double R, int jmin, amplitude amp, std::string id)
         : raw_trajectory(R, 4, id), _jmin(jmin), _amp(amp)
-        { initalize(); };
+        { initialize(); };
 
         protected:
         
@@ -75,6 +79,8 @@ namespace analyticRT
         inline double beta() 
         {
             double r = _g / (2.*_jmin + 1.) * pow(q2hat(), _jmin);
+            if (_amp == nullptr) return r;
+
             complex alpha = RePart() - I*ImPart();
             return r * std::norm(1. + (_jmin - alpha)/r*Ftilde()); 
         };
@@ -125,6 +131,8 @@ namespace analyticRT
                 s.push_back(si); realpha.push_back(rei);
             };
 
+            if (_amp == nullptr) return;
+
             // Also save an interpolation of the cross-channel components
             // from sRHC to the scale lambda2
             std::vector<double> ss, ftilde, imalpha;
@@ -148,9 +156,9 @@ namespace analyticRT
             _ImAlphaInterp.SetData(ss, imalpha); _ftildeInterp.SetData(ss, ftilde);
         };
 
-        inline void initalize()
+        inline void initialize()
         {
-            // Load inital interpolation of the Re alpha(s)
+            // Load initial interpolation of the Re alpha(s)
             
             std::vector<double> s, realpha, zeros;
 
@@ -163,6 +171,8 @@ namespace analyticRT
             
             _ReAlphaAsym = initial_guess(_sAsym);
             _ReAlphaInterp.SetData(s, realpha);
+
+            if (_amp == nullptr) return;
 
             // The "zero-th" iteration assumes zero cross channel contribution
             s.clear();

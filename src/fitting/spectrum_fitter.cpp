@@ -36,7 +36,7 @@ namespace analyticRT
             case spectrum:
             {
                 _spectrum_data.push_back(data); 
-                _N += 2*data._N;
+                (_ignore_widths) ?  _N += data._N : _N += 2*data._N;
                 break;
             };
             case timelike: 
@@ -100,6 +100,8 @@ namespace analyticRT
             double spin_ex  = data._y[i];
             double spin_err = data._dy[i];
             chi2 += pow((spin_th - spin_ex)/spin_err, 2);
+            
+            if (_ignore_widths) continue; 
 
             double width_th  = _trajectory->width(s);
             double width_ex  = data._z[i];
@@ -147,7 +149,8 @@ namespace analyticRT
 
         for (auto data : _spectrum_data)
         {
-            cout << setw(30) << data._id  << setw(20)  << "Spectrum"   << setw(10) << std::to_string(data._x.size()) + " x 2"  << endl;  
+            std::string num_points = (_ignore_widths) ? std::to_string(data._x.size()) : std::to_string(data._x.size()) + " x 2";
+            cout << setw(30) << data._id  << setw(20)  << "Spectrum"   << setw(10) << num_points << endl;  
         };
         for (auto data : _timelike_data)
         {   

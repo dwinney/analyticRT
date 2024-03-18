@@ -19,7 +19,7 @@
 namespace analyticRT
 {
     // Define different archetypes of data
-    enum data_type { spectrum, timelike };
+    enum data_type { spectrum, timelike, regge_trajectory };
 
     struct data_set
     {

@@ -170,6 +170,8 @@ namespace analyticRT
 
             x.push_back(xs);
             fx.push_back(fxs);
+
+            if (_print) print(xs, fxs);
         };
 
         add_curve(x, fx, style);
@@ -210,6 +212,7 @@ namespace analyticRT
 
             x.push_back(xs);
             fx.push_back(fxs);
+            if (_print) print(xs, fxs);
         };
 
         add_dashed(x, fx);

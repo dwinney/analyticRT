@@ -132,6 +132,7 @@ namespace analyticRT
         // Methods to add curves to your plot
 
         inline void set_curve_points(int N){ _Npoints = N; };
+        inline void print_to_terminal(bool x){ _print = x; };
 
         // Basic function which uses the raw vectors and a string id
         void add_curve(std::vector<double> x, std::vector<double> fx, entry_style style);
@@ -218,6 +219,8 @@ namespace analyticRT
         // -----------------------------------------------------------------------
         
         private: 
+
+        bool _print = false;
         
         // Constructor is private, only creatable through plotter
         plot(TCanvas* canvas, std::string file = "")

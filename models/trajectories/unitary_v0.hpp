@@ -84,7 +84,7 @@ namespace analyticRT
             double r = _g / (2.*_jmin + 1.) * pow(q2hat(), _jmin);
             if (_amp == nullptr) return r;
 
-            complex alpha = RePart() - I*ImPart();
+            complex alpha = RePart() + I*ImPart();
             return r * std::norm(1. + (_jmin - alpha)/r*Ftilde()); 
         };
 

@@ -7,7 +7,7 @@
 
 #include "isobars/hypergeometric.hpp"
 #include "isobars/truncated.hpp"
-#include "trajectories/unitary_v2.hpp"
+#include "trajectories/unitary_v0.hpp"
 #include "trajectories/linear.hpp"
 
 #include "trajectory_plots.hpp"
@@ -31,7 +31,7 @@ void pwave()
     // For the I = 1 we can assume for now that there is a single trajectory
 
     // Given by the dispersive form
-    trajectory alpha = new_trajectory<unitary_v2>(4.*M2_PION, 1, amp, "#rho");
+    trajectory alpha = new_trajectory<unitary_v0>(4.*M2_PION, 1, amp, "#rho");
     alpha->max_iterations(5);
 
     // The trajectory defines an isobar

@@ -32,8 +32,8 @@ void swave()
 
     // Given by the dispersive form
     trajectory alpha = new_trajectory<unitary_v2>(4.*M2_PION, 0, "#sigma");
-    alpha->max_iterations(5);
-    alpha->set_initial_guess({-3.5, 4.4}, 20.);
+    alpha->max_iterations(3);
+    alpha->set_initial_guess({-0.3, 0.3}, 20.);
 
     // The trajectory defines an isobar
     isobar sigma = new_isobar<truncated>(0, 5, alpha, "I = 0");
@@ -46,12 +46,13 @@ void swave()
 
     // Couplings if amp ignores cross channels
     amp->ignore_cross(true); // We'll ignore the cross-channel projections in the partial wave
-    double alpha0  = -17.0;  // Trajectory intercept
-    double g       = 700;    // Coupling constant
-    double h       = 35;     // Asymptotic constant
+    double alpha0  = -4.;  // Trajectory intercept
+    double g       = 100;    // Coupling constant
+    double h       = 40;     // Asymptotic constant
+    double s_A     = 0.5;
     
     sigma->set_parameters(  {g, lambda2});
-    alpha->set_parameters({alpha0, lambda2, g, h});
+    alpha->set_parameters({alpha0, lambda2, g, h, s_A});
 
     // ---------------------------------------------------------------------------
     // Make plot

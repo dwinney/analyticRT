@@ -22,11 +22,11 @@ namespace analyticRT
         public:
 
         unitary_v2(double R, int jmin, std::string id)
-        : raw_trajectory(R, 4, id), _jmin(jmin)
+        : raw_trajectory(R, 5, id), _jmin(jmin)
         { initialize(); };
 
         unitary_v2(double R, int jmin, amplitude amp, std::string id)
-        : raw_trajectory(R, 4, id), _jmin(jmin), _amp(amp)
+        : raw_trajectory(R, 5, id), _jmin(jmin), _amp(amp)
         { initialize(); };
 
         protected:
@@ -39,11 +39,12 @@ namespace analyticRT
             _Lam2  = pars[1]; _sLam2 = (4*_Lam2 + STH)/2;
             _g     = pars[2]; 
             _gamma = pars[3]; 
+            _sA    = pars[4];
             
             for (int i = 0; i < _Niters; i++) iterate();
         };
 
-        inline std::vector<std::string> parameter_labels(){ return {"alpha(0)", "Lambda^2", "g", "gamma"}; };
+        inline std::vector<std::string> parameter_labels(){ return {"alpha(0)", "Lambda^2", "g", "gamma", "s_A"}; };
 
         protected:
 
@@ -71,6 +72,7 @@ namespace analyticRT
         int    _jmin  = 1;               // Lowest physical partial wave 
         double _Lam2  = 3., _sLam2 = 5.; // Scale of elastic unitarity
         double _g     = 1., _gamma = 1.; // Overall nearthreshold and high energy couplings
+        double _sA    = 0.5;             // Location of Adler zero pole
 
         // xi is the ratio of momenta squared over momenta evaluated at some scale s = Lambda^2
         inline double q2hat(){ return (_s - _sRHC) / 4. / _Lam2; };
@@ -82,7 +84,9 @@ namespace analyticRT
         inline double gamma(){ return _gamma / PI; };
         inline double beta() 
         {
-            double r = _g / (2.*_jmin + 1.) * pow(q2hat(), _jmin);
+            auto fA = [&](double s){ return s/(s + _sA); };
+            
+            double r = _g / (2.*_jmin + 1.)*fA(_s)*pow(q2hat(), _jmin);
 
             if (_amp == nullptr) return r;
  

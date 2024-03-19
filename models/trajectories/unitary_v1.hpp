@@ -1,28 +1,31 @@
 // Trajectory with a sqrt-log asymptotic but which is exactly
-// unitarizable at lowest PW
+// unitarizable at lowest PW.
+// 
+// -- properly running q2 behavior but sucks for unitarity
+// -- only rho P-wave
 //
 // Author:       Daniel Winney (2023)
 // Affiliation:  Joint Physics Analysis Center (JPAC)
 // Email:        daniel.winney@gmail.com
 // ---------------------------------------------------------------------------
 
-#ifndef UNITARY_HPP
-#define UNITARY_HPP
+#ifndef UNITARY_V1_HPP
+#define UNITARY_V1_HPP
 
 #include "amplitude.hpp"
 #include "trajectory.hpp"
 
 namespace analyticRT
 {
-    class unitary : public raw_trajectory
+    class unitary_v1 : public raw_trajectory
     {
         public:
 
-        unitary(double R, int jmin, std::string id)
+        unitary_v1(double R, int jmin, std::string id)
         : raw_trajectory(R, 4, id), _jmin(jmin)
         { initialize(); };
 
-        unitary(double R, int jmin, amplitude amp, std::string id)
+        unitary_v1(double R, int jmin, amplitude amp, std::string id)
         : raw_trajectory(R, 4, id), _jmin(jmin), _amp(amp)
         { initialize(); };
 
@@ -57,7 +60,8 @@ namespace analyticRT
             // For numerical stability, at asymptotic argumenets, simplify the equation
             if (s > 100) return gamma()*(RePart()*log(q2hat()) + log(beta()/gamma()));
             
-            return gamma()* log(1. + rho()* beta()/gamma() * (1. + pow(q2hat(), RePart())));
+            double Realpha = (RePart() >= _jmin) ? RePart() : _jmin;
+            return gamma()* log(1. + rho()*beta()/gamma()*pow(q2hat(), Realpha));
         };
 
         // Save s at each evaluation step to not have to pass it around to each subfunction
@@ -78,7 +82,7 @@ namespace analyticRT
         inline double gamma(){ return _gamma / PI; };
         inline double beta() 
         {
-            double r = _g / (2.*_jmin + 1.) * pow(q2hat(), _jmin);
+            double r = _g / (2.*_jmin + 1.);
             if (_amp == nullptr) return r;
 
             complex alpha = RePart() - I*ImPart();
@@ -173,7 +177,6 @@ namespace analyticRT
             _ReAlphaInterp.SetData(s, realpha);
 
             if (_amp == nullptr) return;
-
             // The "zero-th" iteration assumes zero cross channel contribution
             s.clear();
             for (int i = 0; i < _Ninterp; i++)

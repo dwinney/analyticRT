@@ -7,7 +7,7 @@
 
 #include "isobars/hypergeometric.hpp"
 #include "isobars/truncated.hpp"
-#include "trajectories/unitary.hpp"
+#include "trajectories/unitary_v2.hpp"
 #include "trajectories/linear.hpp"
 
 #include "trajectory_plots.hpp"
@@ -31,7 +31,7 @@ void pwave()
     // For the I = 1 we can assume for now that there is a single trajectory
 
     // Given by the dispersive form
-    trajectory alpha = new_trajectory<unitary>(4.*M2_PION, 1, amp, "#rho");
+    trajectory alpha = new_trajectory<unitary_v2>(4.*M2_PION, 1, amp, "#rho");
     alpha->max_iterations(5);
 
     // The trajectory defines an isobar
@@ -44,16 +44,16 @@ void pwave()
     // To be related
     double lambda2 = 1.5;   // Regge scale
 
-    // Couplings if including cross channels
-    double alpha0  = 0.48; // Trajectory intercept
-    double g       = 160;   // Coupling constant
-    double h       = 1.1;  // Asymptotic constant
+    // // Couplings if including cross channels
+    // double alpha0  = 0.48; // Trajectory intercept
+    // double g       = 160;   // Coupling constant
+    // double h       = 1.1;  // Asymptotic constant
 
-    // // Couplings if amp ignores cross channels
-    // amp->ignore_cross(true); // We'll ignore the cross-channel projections in the partial wave
-    // double alpha0  = 0.557; // Trajectory intercept
-    // double g       = 145;   // Coupling constant
-    // double h       = 1.05;  // Asymptotic constant
+    // Couplings if amp ignores cross channels
+    amp->ignore_cross(true); // We'll ignore the cross-channel projections in the partial wave
+    double alpha0  = 0.557; // Trajectory intercept
+    double g       = 145;   // Coupling constant
+    double h       = 1.05;  // Asymptotic constant
     
     rho->set_parameters(  {g, lambda2});
     alpha->set_parameters({alpha0, lambda2, g, h});

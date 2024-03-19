@@ -84,12 +84,12 @@ namespace analyticRT
         };
 
         // bounds of integration
-        double low = _sRHC;
+        double low = _sRHC + EPS;
         double high = std::numeric_limits<double>::infinity();
 
         complex logarithm, integral, result;
         integral  = boost::math::quadrature::gauss_kronrod<double, 61>::integrate(fdx, low, high, 20, 1.E-9, NULL);
-        logarithm = RHCs * log(1. - (s + IEPS) / low);
+        logarithm = are_equal(s, _sRHC, 1E-5) ? 0 : RHCs * log(1. - (s + IEPS) / low);
         result = (integral - logarithm) / M_PI;
     
         return result;

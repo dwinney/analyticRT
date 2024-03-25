@@ -112,6 +112,12 @@ namespace analyticRT
 
         // In the resonance regime we can approximate the real part as a linear function
         double width(double s);
+        
+        // RHC must always be specified by model
+        inline virtual double RHC(double s){ return 0.; };
+
+        // LHC is optional and will default to 0
+        inline virtual double LHC(double s){ return 0.; };
 
         // -------------------------------------------------------------------
         protected:
@@ -121,12 +127,6 @@ namespace analyticRT
         // Change number of expected parameters
         // We dont want this changing outside of the class itself
         inline void set_Npars(int n){ _Npars = n; };
-
-        // RHC must always be specified by model
-        virtual double RHC(double s){ return 0.; };
-
-        // LHC is optional and will default to 0
-        inline virtual double LHC(double s){ return 0.; };
 
         // Threshold energies for LHC and RHC
         double _sRHC, _sLHC;

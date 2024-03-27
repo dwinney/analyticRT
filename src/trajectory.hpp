@@ -71,7 +71,7 @@ namespace analyticRT
         // Use set_parameters to set free variables
         // this checks that the size is the expected size
         void set_parameters( std::vector<double> pars);
-        inline int Nfree(){ return _Npars; };
+        inline int N_pars(){ return _Npars; };
 
         // This function actually distributes paramters to the model and must be specified
         virtual inline void allocate_parameters(std::vector<double> pars){ return; };

@@ -18,9 +18,9 @@ namespace analyticRT
     // Make sure the parameters have the correct size and then feed it to allocate_parameters
     void raw_isobar::set_parameters(std::vector<double> pars)
     {
-        if (pars.size() != Nfree()) 
+        if (pars.size() != N_pars()) 
         {
-            warning(id(), "Incorrect number of parameters passed! Expected " + std::to_string(Nfree()) + 
+            warning(id(), "Incorrect number of parameters passed! Expected " + std::to_string(N_pars()) + 
                           " but received " + std::to_string(pars.size()) + "!");
             return;
         };
@@ -34,10 +34,10 @@ namespace analyticRT
         auto running_iter = x.begin();
         for (isobar amp : _isobars)
         {
-            auto sub_pars = std::vector<double>(running_iter, running_iter + amp->Nfree());
+            auto sub_pars = std::vector<double>(running_iter, running_iter + amp->N_pars());
             amp->set_parameters(sub_pars);
 
-            running_iter += amp->Nfree();
+            running_iter += amp->N_pars();
         };
         return;
     };

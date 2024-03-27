@@ -51,7 +51,7 @@ namespace analyticRT
         data_set output;
         output._id   = id;
         output._N    = N;
-        output._type = spectrum;
+        output._type = 0;
 
         output._x   = raw[2];
         output._dx  = raw[3];
@@ -74,7 +74,7 @@ namespace analyticRT
         data_set output;
         output._id   = id;
         output._N    = N;
-        output._type = spectrum;
+        output._type = 0;
 
         output._x   = filtered[2];
         output._dx  = filtered[3];

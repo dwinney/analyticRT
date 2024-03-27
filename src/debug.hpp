@@ -48,7 +48,14 @@ namespace analyticRT
         std::cout << std::left << "WARNING! " + location + ": " + message << std::endl;
     };
 
-        // Throw an error message without location and return a value
+    // Throw an error message without location and return a value
+    template<typename T> 
+    inline T error(std::string location, std::string message, T return_value )
+    {
+        warning(location, message);
+        return return_value;
+    };
+    
     template<typename T> 
     inline T error(std::string message, T return_value )
     {

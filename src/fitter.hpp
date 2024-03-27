@@ -1,15 +1,21 @@
-// Abstract fitter class to fit some object (amplitude, isobar, or trajectory) to 
-// some data_set
+// Class which allows an isobar and a trajectory to be fit with Minuit
+// Currently this is a single channel and single trajectory fit but can be generalized
 //
-// Author:       Daniel Winney (2023)
-// Affiliation:  Joint Physics Analysis Center (JPAC)
-// Email:        daniel.winney@gmail.com
-// ---------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// Author:       Daniel Winney (2022)
+// Affiliation:  Joint Physics Analysis Center (JPAC),
+//               South China Normal Univeristy (SCNU)
+// Email:        dwinney@iu.alumni.edu
+// ------------------------------------------------------------------------------
 
 #ifndef FITTER_HPP
 #define FITTER_HPP
 
+#include "kinematics.hpp"
+#include "isobar.hpp"
+#include "trajectory.hpp"
 #include "data_set.hpp"
+#include "print.hpp"
 
 #include <chrono>
 #include <string>
@@ -22,13 +28,22 @@
 
 namespace analyticRT
 {
-    class fitter;
+    // ---------------------------------------------------------------------------
+    // Structs for storing relevant info inside the fitter
 
     // Each free parameter of a model has associated with is a bunch of options
     class parameter
     {
         public:
 
+        // Default initialized
+        // This initializes a fixed parameter for normalizations
+        parameter()
+        : _fixed(true), _value(1.), 
+          _label(default_label(0)), _i(-1),
+          _lower(0), _upper(5)
+        {};
+        
         // Constructor for amplitude variables
         parameter(int i)
         : _i(i), _label(default_label(i))
@@ -36,6 +51,7 @@ namespace analyticRT
 
         int         _i;
         std::string _label;
+        std::string _message;
         bool   _fixed         = false;
         double _value         = 0;
         bool   _custom_limits = false;
@@ -43,8 +59,9 @@ namespace analyticRT
         double _lower         = 0;
         double _step          = 0.1;
 
-        // For iteration fitting save each step
-        std::vector<double> _itval, _iterr;
+        // If this parameter is synced to be equal to another
+        bool   _synced        = false;
+        int    _sync_to       = -1; // Which param its synced to
 
         static inline std::string default_label(int i)
         {
@@ -52,64 +69,153 @@ namespace analyticRT
         };
     };
 
-    class fitter 
+    // ---------------------------------------------------------------------------
+    // Actual fitter object
+    // This is templated because it requires an implementation of the chi2 function to be fit
+    // The template F should contain the details of the fit and the following static functions
+    // fcn(amplitude, std::vector<data_set>&) [function to be minimized, e.g. chi2]
+    // 
+    template<class F>
+    class fitter
     {
-        public:
+        public: 
 
         // Basic constructor, only requires amplitude to be fit 
         // uses default settings for minuit
-        fitter()
-        : _minuit(ROOT::Math::Factory::CreateMinimizer("Minuit2", "Combined"))
-        {};
+        fitter(isobar iso_to_fit, trajectory alpha_to_fit)
+        : _isobar(iso_to_fit), _trajectory(alpha_to_fit),
+          _minuit(ROOT::Math::Factory::CreateMinimizer("Minuit2", "Combined"))
+        {
+            reset_parameters();
+        };
 
         // Parameterized constructor 
         // with explicit choice of minimization strategy and tolerance of minuit routines
-        fitter(std::string strategy, double tolerance = 1.E-6)
-        : _tolerance(tolerance),
+        fitter(isobar iso_to_fit, trajectory alpha_to_fit, std::string strategy, double tolerance = 1.E-6)
+        : _isobar(iso_to_fit), _trajectory(alpha_to_fit), _tolerance(tolerance),
           _minuit(ROOT::Math::Factory::CreateMinimizer("Minuit2", strategy))
-        {};
+        {
+            reset_parameters();
+        };
 
         // -----------------------------------------------------------------------
         // Methods to add data to be fit against
 
-        // Parse a data set and add it to the fitting pool
-        // Currently supported data_types are integrated and differential x-sections
-        virtual void add_data(data_set data) = 0;
-        // Remove all saved data 
-        virtual void clear_data() = 0;
-
-        // OR pass in a whole vector and each one individually
-        inline void add_data(std::vector<data_set> data)
-        {
-            for (auto set : data) add_data(set);
-        };
+        inline void add_data(data_set data){ _N += data._N; _data.push_back(data); };
+        inline void add_data(std::vector<data_set> data){ for (auto datum : data) add_data(datum); };
+        inline void clear_data(){ _data.clear(); _N = 0; };
 
         // -----------------------------------------------------------------------
         // Set limits, labels, and fix parameters
 
         // Reset labels, limits and options on all parameters
-        virtual void reset_parameters() = 0;
+        inline void reset_parameters()
+        {
+            _pars.clear(); 
+            
+
+            // Count number of parameters from amplitude and from trajectory
+            std::vector<std::string> iso_labels = {};
+            if (_isobar != nullptr)
+            {
+                _Niso        = _isobar->N_pars();
+                iso_labels   = _isobar->parameter_labels();
+            };
+            std::vector<std::string> traj_labels = {};
+            if (_trajectory != nullptr)
+            {
+                _Ntraj      = _trajectory->N_pars();
+                traj_labels = _trajectory->parameter_labels();
+            };
+
+            // Accumulate the labels 
+            _Nfree = _Niso + _Ntraj;
+            for (int i = 0; i < _Nfree; i++) _pars.push_back(i);
+
+            std::vector<std::string> labels = iso_labels;
+            labels.insert( labels.end(), std::make_move_iterator(traj_labels.begin()), std::make_move_iterator(traj_labels.end()));
+            set_parameter_labels(labels);
+        };
 
         // Give each parameter a label beyond their default par[i] name
-        void set_parameter_labels(std::vector<std::string> labels);
+        inline void set_parameter_labels(std::vector<std::string> labels)
+        {
+            if (labels.size() != _pars.size())
+            {
+                warning("fitter::set_parameter_labels", "Labels vector does not match number of parameters!");
+                return;
+            }
+            for (int i = 0; i < _pars.size(); i++) _pars[i]._label = labels[i];
+        };
 
         // Set limits and/or a custom stepsize
-        void set_parameter_limits(parameter& par,    std::array<double,2> bounds, double step = 0.1);
-        void set_parameter_limits(std::string label, std::array<double,2> bounds, double step = 0.1);
+        inline void set_parameter_limits(parameter& par, std::array<double,2> bounds, double step = 0.1)
+        {
+            par._custom_limits = true;
+            par._lower         = bounds[0];
+            par._upper         = bounds[1];
+            par._step          = step;
+        };
 
-        // Indicate a parameter should be fixed to its initial guess value or a fixed val
-        void fix_parameter(parameter& par, double val = 0);
-        void fix_parameter(std::string label, double val = 0);
+        inline void set_parameter_limits(std::string label, std::array<double,2> bounds, double step = 0.1)
+        {
+            int index = find_parameter(label);
+            if (index < 0) return;
+            return set_parameter_limits(_pars[index], bounds, step);
+        };
 
-        // Unfix a parameter
-        void free_parameter(parameter& par);
-        void free_parameter(std::string label);
+        inline void fix_parameter(parameter& par, double val)
+        {
+            // If parameter is already fixed, just update the fixed val
+            // otherwise flip the fixed flag and update the number of free pars
+            if (!par._fixed) _Nfree--;
+            par._fixed = true;
+            par._value = val;
+            _fit = false;
+        };
+
+        inline void fix_parameter(std::string label, double val)
+        {
+            int index = find_parameter(label);
+            if (index < 0) return;
+            return fix_parameter(_pars[index], val);
+        };
+
+        inline void free_parameter(parameter& par)
+        {
+            // if not fixed, this does nothing
+            if (!par._fixed) return;
+            par._fixed = false;
+            _fit = false;
+            _Nfree++;
+        };
+
+        inline void free_parameter(std::string label)
+        {
+            int index = find_parameter(label);
+            if (index < 0) return;
+            free_parameter(_pars[index]);
+        };
+
+        inline void sync_parameter(std::string par, std::string synced_to)
+        {
+            int i            = find_parameter(par);
+            int i_sync_to    = find_parameter(synced_to);
+            _pars[i]._synced  = true;
+            _pars[i]._sync_to = i_sync_to;
+
+            // Also save present value in case there is one
+            _pars[i]._value = _pars[i_sync_to]._value;
+            if (!_pars[i_sync_to]._fixed)_Nfree--;
+        };
+
+        inline void unsync_parameter(std::string par){ _pars[ find_parameter(par) ]._synced = false; };
 
         // -----------------------------------------------------------------------
         // Methods related to fit options
 
         // Set the maximum number of calls minuit will do
-        inline void set_max_calls(int n){ _max_calls = n; };
+        inline void set_max_calls(int n){ print(n); _max_calls = n; };
         
         // Message level for minuit (0-4)
         inline void set_print_level(int n){ _print_level = n; };
@@ -120,33 +226,149 @@ namespace analyticRT
         // Change the guess range for initializing parameters
         inline void set_guess_range(std::array<double,2> bounds){ _guess_range = bounds; };
 
-        // Actually do the fit given a vector of size amp->N_pars() as starting values
+        // Actually do the fit given a vector of size N_pars as starting values
         // Prints results to command line but also returns the best-fit chi2 value
-        void do_fit(std::vector<double> starting_guess, bool show_data = true);
+        inline void do_fit(std::vector<double> starting_guess, bool show_data = true)
+        {
+            if (starting_guess.size() != _Nfree) 
+            {
+                warning("fitter::do_fit", "Starting guess not the correct size! Expected " + std::to_string(_Nfree) + " parameters!");
+                return;
+            };
 
-        // Repeat do_fit N times and find the best fit
-        // Parameters are randomly initialized each time on the interval [-5, 5] unless custom limits are set
-        void do_fit(int N);
+            set_up(starting_guess);
 
-        // Repeat a fit N times but between each fit, call trajectory::iterate()
-        void iterative_fit(int N);
+            if (show_data) { line(); data_info(); };
+            parameter_info(starting_guess);
+
+            auto start = std::chrono::high_resolution_clock::now();
+            std::cout << "Beginning fit..." << std::flush; 
+
+            if (_print_level != 0) line();   
+            _minuit->Minimize();
+            if (_print_level != 0) line();   
+
+            std::cout << "Done! \n";
+
+            // Timing info
+            auto stop     = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast< std::chrono::seconds>(stop - start);
+            std::cout << std::left << "Finished in " << duration.count() << " s" << std::endl;
+
+            line();
+            print_results();
+        };
+
+        // Same as above (do single fit) but initialize random parameters
+        inline void do_fit()
+        {            
+            // Initial guess
+            std::vector<double> guess;  
+
+            // Initialize the guess for each parameter
+            std::vector<int> synced_pars;
+            for (auto par : _pars)
+            {
+                if (par._fixed) continue;
+                if (par._synced){ synced_pars.push_back(par._i); continue; } // Flag any synced parameters, we'll come back to them
+
+                if (par._custom_limits) guess.push_back(_guesser->Uniform(par._lower, par._upper)); 
+                else                    guess.push_back(_guesser->Uniform(_guess_range[0], _guess_range[1]));
+                par._value = guess.back();
+            };  
+
+            // After all randomized parameters have been set, rego through the synced ones
+            for (int i : synced_pars)
+            {
+                int j = _pars[i]._sync_to;
+                _pars[i]._value = _pars[j]._value;
+            };
+
+            do_fit(guess);
+        };
+
+        // Do N fits with random parameters and return the best fit found
+        inline void do_fit(int N)
+        {
+            
+            divider();
+            std::cout << std::left << "Finding best fit out of N = " + std::to_string(N) + " attempts." << std::endl;
+            if (N <= 0){ line(); return; };
+
+            // Initial guess
+            std::vector<double> guess;
+
+            for (int i = 1; i <= N; i++)
+            {
+                guess.clear();
+                // Whether this is the first iteration
+                bool first_fit =  !(i-1);
+                // Initialize the guess for each parameter
+                
+                std::vector<int> synced_pars;
+                for (auto par : _pars)
+                {
+                    if (par._fixed) continue;
+                    if (par._synced){ synced_pars.push_back(par._i); continue; } // Flag any synced parameters, we'll come back to them
+
+                    if (par._custom_limits) guess.push_back(_guesser->Uniform(par._lower, par._upper)); 
+                    else                    guess.push_back(_guesser->Uniform(_guess_range[0], _guess_range[1]));
+                    par._value = guess.back();
+                };
+
+                // After all randomized parameters have been set, rego through the synced ones
+                for (int i : synced_pars)
+                {
+                    int j = _pars[i]._sync_to;
+                    _pars[i]._value = _pars[j]._value;
+                };
+
+                // Do out fit with this random guess
+                if (!first_fit) std::cout << std::left << "Fit (" + std::to_string(i) + "/" + std::to_string(N) + ")" << std::endl;
+                do_fit(guess, first_fit);
+
+
+                // Compare with previous best and update
+                if ( first_fit || fcn() < _best_fcn)
+                {
+                    _best_fcn_dof = _minuit->MinValue() / (_N - _minuit->NFree());
+                    _best_fcn     = _minuit->MinValue();
+                    _best_pars    = convert(_minuit->X());
+                    _best_errs    = convert(_minuit->Errors());
+                };
+            };
+            
+            // After looping, set the best_pars to the amplitude
+            allocate_parameters(_best_pars);
+
+            // And set the global saved pars to the best_fit
+            std::cout << std::left << "Best fit found after N = " + std::to_string(N) + " iterations" << std::endl;
+            line();
+            print_results(false);
+        };
 
         // Return a vector of best-fit parameters from last fit
-        inline std::vector<double> best_fit(){ return (_fit) ? _fit_pars : std::vector<double>(); };
+        inline std::vector<double> pars(){ return (_fit) ? _fit_pars : std::vector<double>(); };
 
-        // Return a vector of best-fit parameters from last fit
-        inline double chi2()   { return (_fit) ? _chi2    : -1; };
-        inline double chi2dof(){ return (_fit) ? _chi2dof : -1; };
+        // Return value of fit function from last fit
+        inline double fcn()     { return (_fit) ? _fcn     : NaN<double>(); };
+        inline double fcn_dof() { return (_fit) ? _fcn_dof : NaN<double>(); };
 
-        // -----------------------------------------------------------------------
+        // Return the pointer to the amp being fit at its current state
+        inline isobar     get_isobar()    { return _isobar; };
+        inline trajectory get_trajectory(){ return _trajectory; };
 
-        protected:
+        private:
+
+        // These ptrs should point to the amplitude and trajectory to be fit
+        isobar     _isobar     = nullptr;
+        trajectory _trajectory = nullptr;
 
         // -----------------------------------------------------------------------
         // Data handling
 
-        // Total number of data points
-        int _N = 0;
+        int _N = 0;  // Total number of data points
+        std::vector<data_set> _data;  // Contain all data
 
         // -----------------------------------------------------------------------
         // MINUIT handling 
@@ -156,73 +378,306 @@ namespace analyticRT
         double _tolerance  = 1.E-6; // Minimization tolerance
 
         ROOT::Math::Minimizer * _minuit;
-        ROOT::Math::Functor     _fcn;
+        ROOT::Math::Functor _wfcn;
+
+        // Random number generator for creating initial guesses;
+        TRandom *_guesser = new TRandom(0);
 
         // Initialize minuit with all our parameter options etc
-        void set_up(std::vector<double> starting_guess);
+        inline void set_up(std::vector<double> starting_guess)
+        {
+            _minuit->Clear();
+            _minuit->SetTolerance(_tolerance);
+            _minuit->SetPrintLevel(_print_level);
+            _minuit->SetMaxFunctionCalls(_max_calls);
+
+            // Iterate over each _par but also keep track of the index in starting_guess 
+            // because parameters might be fixed, these indexes dont necessarily line up
+            int i = 0;
+            for (auto par : _pars)
+            {   
+                if (par._fixed || par._synced) continue;
+                _minuit->SetVariable(i, par._label, starting_guess[i], par._step);
+                if (par._custom_limits) _minuit->SetVariableLimits(i, par._lower, par._upper);
+                i++; // move index up
+            };
+        
+            _wfcn = ROOT::Math::Functor(this, &fitter::fit_fcn, _Nfree);
+            _minuit->SetFunction(_wfcn);
+        };
 
         // -----------------------------------------------------------------------
         // Calcualtions of chi-squared 
+        
+        inline void allocate_parameters( std::vector<double> pars)
+        {
+            std::vector<double> ipars(pars.begin(), pars.begin() + _Niso);
+            std::vector<double> tpars(pars.begin() + _Niso, pars.begin() + _Niso + _Ntraj);
 
-        // This is the actual function that gets called by minuit
-        // Combined chi2 from all observables and data sets
-        virtual double fit_chi2(const double *pars) = 0;
+            if (_isobar     != nullptr) _isobar->set_parameters(ipars);
+            if (_trajectory != nullptr) _trajectory->set_parameters(tpars);
+        };
+
+        // // This is the actual function that gets called by minuit
+        inline double fit_fcn(const double *cpars)
+        { 
+            // First convert the C string to a C++ vector
+            std::vector<double> pars = convert(cpars);
+
+            // Pass parameters to the amplitude and trajectory
+            allocate_parameters(pars);
+
+            // Pass both this and data to fit function
+            return F::fcn(_data, _isobar, _trajectory); 
+        };
 
         // Save of the last fit run
-        bool _fit = false;          // Whether a fit has already been done or not yet
-        double _chi2dof, _chi2;     // Last saved chi2/dof
+        bool _fit = false;      // Whether a fit has already been done or not yet
+        double _fcn, _fcn_dof;  // Last saved value of fcn function
         std::vector<double> _fit_pars, _errors;
 
         // Save of the best fits found if running multiple times
-        double _best_chi2, _best_chi2dof;
+        double _best_fcn, _best_fcn_dof;
         std::vector<double> _best_pars, _best_errs;
 
         // -----------------------------------------------------------------------
         // Parameter handling
 
-        // Take a resulting vest fit parameters from a fit and
-        // pass them to the fit object
-        virtual void pass_pars(std::vector<double> pars) = 0;
-
-        // In the case of an iterative fit, this function should do all things
-        // to move to the next iteration step
-        virtual void iterate(){ return; };
-
         // Store of parameter info
         std::vector<parameter> _pars;
+
+        // Number of parameters belonging to the isobar and trajectory respectively
+        int _Niso  = 0, _Ntraj = 0;
 
         // Number of free parameters
         int _Nfree = 0;
 
         // Default guess_range to initalize parameters
-        std::array<double, 2> _guess_range = {-5, 5};
+        std::array<double,2> _guess_range = {-5, 5};
 
-        // Return the index given a label
-        int find_parameter(std::string label);
+        // Given a parameter label, find the corresponding index
+        inline int find_parameter(std::string label)
+        {
+            for (auto par : _pars) if (par._label == label) return par._i;
+            return error("fitter::find_parameter", "Cannot find parameter labeled " + label + "!", -1);
+        };
 
-        // Minuit uses C style arrays to pass parameters. 
-        // This method converts them to C++ vectors
-        std::vector<double> convert(const double * cpars);
+        // Given a C-style array of size _Nfree
+        // Convert to a C++ style std::vector and populate
+        // fixed value parameters in the expected order
+        inline std::vector<double> convert(const double * cpars)
+        {
+            std::vector<double> result;
 
-        // Random number generator for creating initial guesses;
-        TRandom *_guesser = new TRandom(0);
+            // Move along the pars index when a parameter is not fixed
+            int i = 0;
 
-        
+            std::vector<int> synced_pars;
+            for (auto par : _pars)
+            {
+                if (par._synced) synced_pars.push_back(par._i); 
+                if (par._fixed || par._synced) result.push_back(par._value);
+                else { result.push_back(cpars[i]); i++; };
+            };
+
+            for (int j : synced_pars)
+            {
+                _pars[j]._value = _pars[_pars[j]._sync_to]._value;
+                result[j] = result[_pars[j]._sync_to];
+            };
+
+            if (i != _Nfree) warning("fitter::convert", "Something went wrong in converting parameter vector.");
+            return result;
+        };
+
         // -----------------------------------------------------------------------
         // Methods to print out status to command line
 
         // Summary of data sets that have been recieved
-        virtual void data_info() = 0;
+        inline void data_info()
+        {
+            using std::cout; using std::left; using std::endl; using std::setw;
+            
+            if (_data.size() == 0)
+            {
+                warning("fitter::data_info", "No data found!"); 
+                return;
+            };
+
+            cout << left;
+            divider();
+
+            std::string iso_name, traj_name, conjunction;
+
+            if (_isobar != nullptr)
+            {
+                iso_name = "isobar (\"" + _isobar->id() + "\")";
+            };
+            if (_trajectory != nullptr)
+            {
+                traj_name = "trajectory (\"" + _trajectory->id() + "\")";
+            };
+            if (_isobar != nullptr && _trajectory != nullptr) conjunction = " and ";
+
+            cout << "Fitting " << iso_name + conjunction + traj_name << " to " << _N << " data points:" << endl;
+
+            line();
+            cout << setw(25) << "DATA SET"         << setw(30) << "TYPE     "      << setw(10) << "POINTS" << endl;
+            cout << setw(25) << "----------------" << setw(30) << "--------------" << setw(10) << "-------" << endl;
+            for (auto data : _data)
+            {
+                cout << setw(25) << data._id  << setw(30)  << F::data_type(data._type)  << setw(10) << data._N << endl;  
+            };
+        };
 
         // Similar summary for parameters
         // Display alongside a vector of current parameter values
         // bool start is whether this is the starting guess vector or the 
         // best fit results
-        void parameter_info(std::vector<double> guess);
+        inline void parameter_info(std::vector<double> starting_guess)
+        {
+            using std::cout; using std::left; using std::endl; using std::setw;
+
+            cout << std::setprecision(8);
+            cout << left;
+
+            line(); divider();
+            // Print message at the beginning of the fit
+            cout << "Fitting " + std::to_string(_Nfree) << " (of " << std::to_string(_pars.size()) << ") parameters" << endl;
+            line();
+
+            // Moving index from the guess vector
+            int i = 0;
+            
+            std::vector<int> synced_pars;
+            std::vector<double> vals;
+            for (auto &par : _pars)
+            {
+                if (par._synced)
+                {
+                    vals.push_back(0);
+                    synced_pars.push_back(par._i);
+                    par._message = "[= " + std::to_string(par._sync_to) + "]";
+                    continue;
+                };
+
+                // Or is fixed
+                if (par._fixed)
+                {
+                    vals.push_back(par._value);
+                    par._message  =  "[FIXED]";
+                    continue;
+                }
+
+                par._value = starting_guess[i];
+                vals.push_back(par._value);
+                if (par._custom_limits)
+                {   
+                    std::stringstream ss;
+                    ss << std::setprecision(5) << "[" << par._lower << ", " << par._upper << "]";
+                    par._message = ss.str();
+                };
+                i++;
+            };
+
+            for (int j : synced_pars)
+            {
+                int k = _pars[j]._sync_to;
+                _pars[j]._value = _pars[k]._value;
+                vals[j] = _pars[k]._value;
+            };
+
+            if (_isobar != nullptr)
+            { 
+                line(); centered(4, "Isobar parameters"); divider(4); 
+                cout << left << setw(10) << "id"     << setw(17) << "PARAMETER"  << setw(20) << "START VALUE"  << endl;
+                cout << left << setw(10) << "-----" << setw(17) << "----------" << setw(20) << "------------" << endl;
+            };
+            for (int k = 0; k < _Niso; k++)
+            {
+                cout << left << setw(10) << _pars[k]._i << setw(17) << _pars[k]._label << setw(20) << vals[_pars[k]._i] << setw(20) << _pars[k]._message << endl;
+            };
+            
+            if (_trajectory != nullptr)
+            { 
+                line(); centered(4, "Trajectory parameters"); divider(4); 
+                cout << left << setw(10) << "id"     << setw(17) << "PARAMETER"  << setw(20) << "START VALUE"  << endl;
+                cout << left << setw(10) << "-----" << setw(17) << "----------" << setw(20) << "------------" << endl;
+            }; 
+            for (int k = _Niso; k < _Niso + _Ntraj; k++)
+            {
+                cout << left << setw(10) << _pars[k]._i << setw(17) << _pars[k]._label << setw(20) << vals[_pars[k]._i] << setw(20) << _pars[k]._message << endl;
+            };
+
+            line(); divider(); line();
+        };
 
         // After a fit return a summary of fit results
-        void print_results(bool last_fit = true);
+        // At the end of a fit, print out a table sumarizing the fit results
+        // if last_fit == true, we grab the results from the most recent fit in _minuit
+        // else we print out the ones saved in _best_fit
+        inline void print_results(bool last_fit = true)
+        {
+            using std::cout; using std::left; using std::endl; using std::setw;
 
+            cout << std::setprecision(8);
+            cout << left;
+
+            int dof                  = _N - _minuit->NFree();
+            double fcn               = (last_fit) ? _minuit->MinValue()               : _best_fcn;
+            double fcn_dof           = (last_fit) ? _minuit->MinValue() / double(dof) : _best_fcn_dof;
+            std::vector<double> pars = (last_fit) ? convert(_minuit->X())             : _best_pars;
+            std::vector<double> errs = (last_fit) ? convert(_minuit->Errors())        : _best_errs;
+
+            divider();
+            std::cout << std::left << std::setw(5)  << "fcn = "       << std::setw(15) << fcn     << std::setw(5) << "";
+            std::cout << std::left << std::setw(10) << "fcn/dof = "  << std::setw(15) << fcn_dof << "\n";
+
+            for (int i = 0; i < pars.size(); i++) _pars[i]._value = pars[i];
+
+            if (_isobar != nullptr)
+            {
+                line(); centered(4, "Isobar parameters"); divider(4);            
+                cout << left << setw(10) << "id"     << setw(16) << "PARAMETER"  << setw(18) << "FIT VALUE"    << setw(18) << "ERROR"        << endl;
+                cout << left << setw(10) << "-----" << setw(16) << "----------" << setw(18) << "------------" << setw(18) << "------------" << endl;
+            };
+            for (int k = 0; k < _Niso; k++)
+            {
+                parameter par = _pars[k];
+                std::stringstream ss;
+                ss << std::setprecision(8) << errs[par._i];
+                std::string err = !(par._fixed || par._synced) ? ss.str() : par._message;
+                cout << left << setw(10) << par._i << setw(17) << par._label << setw(20) << par._value << setw(20) << err << endl;
+            };
+
+            if (_trajectory != nullptr)
+            {
+                line(); centered(4, "Trajectory parameters"); divider(4);            
+                cout << left << setw(10) << "id"     << setw(16) << "PARAMETER"  << setw(18) << "FIT VALUE"    << setw(18) << "ERROR"        << endl;
+                cout << left << setw(10) << "-----" << setw(16) << "----------" << setw(18) << "------------" << setw(18) << "------------" << endl;
+            };
+            for (int k = _Niso; k < _Niso + _Ntraj; k++)
+            {
+                parameter par = _pars[k];
+                std::stringstream ss;
+                ss << std::setprecision(8) << errs[par._i];
+                std::string err = !(par._fixed || par._synced) ? ss.str() : par._message;
+                cout << left << setw(10) << par._i << setw(17) << par._label << setw(20) << par._value << setw(20) << err << endl;
+            };
+
+
+            line(); divider(); line();
+            
+            // // At the end update the amplitude parameters to include the fit results
+            // _amplitude->set_parameters(pars);
+
+            _fcn      = fcn;
+            _fcn_dof  = fcn_dof;
+            _fit_pars = pars;
+
+            // Let rest of the fitter that a fit result has been saved
+            _fit = true;
+        };
     };
 };
 

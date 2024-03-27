@@ -64,16 +64,16 @@ namespace analyticRT
             int n = 0;
             for (auto v : vs)
             {
-                n += v->Nfree();
+                n += v->N_pars();
             }
-            set_Nfree(n);
+            set_Npars(n);
         };
 
         // ---------------------------------------------------------------------------
         // Getters
 
         inline std::string id(){ return _id;    };         // string id 
-        inline int Nfree()    { return _Nfree; };         // # of free parameters
+        inline int N_pars()    { return _Npars; };         // # of free parameters
         inline unsigned int isospin(){ return _isospin; }; // fixed isospin
 
         // If the current isobar pointer describes a sum
@@ -113,7 +113,7 @@ namespace analyticRT
         virtual std::vector<std::string> parameter_labels()
         {
             std::vector<std::string> v;
-            for (int i = 0; i < _Nfree; i++)
+            for (int i = 0; i < _Npars; i++)
             {
                 v.push_back( "p["+std::to_string(i)+"]");
             };
@@ -123,7 +123,7 @@ namespace analyticRT
         protected: 
 
         // Change the number of free parameters from inside
-        inline void set_Nfree(unsigned int n){ _Nfree = n; };
+        inline void set_Npars(unsigned int n){ _Npars = n; };
 
         friend std::vector<isobar> get_isobars(isobar a);
 
@@ -144,7 +144,7 @@ namespace analyticRT
 
         // Basic properties of the amplitude
         std::string _id = "raw_amplitude";  // String id
-        int _Nfree = 0;                     // # of free parameters
+        int _Npars = 0;                     // # of free parameters
 
         // Wheter to use adaptive integration
         bool _adaptive = false;

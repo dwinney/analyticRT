@@ -21,7 +21,7 @@ void Load()
     TString lib  = main_dir + "/lib/libANALYTICRT." + lib_ext;
 
     // Headers
-    TString core = main_dir + "/src/core"; 
+    TString core = main_dir + "/src"; 
     TString phys = main_dir + "/models";
     TString data = main_dir + "/data";
 

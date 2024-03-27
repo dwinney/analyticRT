@@ -18,9 +18,6 @@
 
 namespace analyticRT
 {
-    // Define different archetypes of data
-    enum data_type { spectrum, timelike, regge_trajectory };
-
     struct data_set
     {
         // Number of data points
@@ -30,7 +27,7 @@ namespace analyticRT
         std::string _id = "data_set";
 
         // What is being represented by data
-        data_type _type;
+        int _type;
         
         // vectors to store independent and dependent variables and their errors
         std::vector<double> _x, _y, _z, _dx, _dy, _dz;

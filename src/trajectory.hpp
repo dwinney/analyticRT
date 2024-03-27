@@ -91,20 +91,8 @@ namespace analyticRT
         // Set the subtraction location for the dispersion relation
         inline void set_subtraction(double s_sub, double val){ _sSUB = s_sub; _alphaSUB = val; };
 
-        // Many models can form iterative solutions between real and imaginary part
-        // here you can set how many iterations to do
-        inline  void max_iterations(int x){ _Niters = x; };
-        virtual void iterate(){};
-
         // Output the trajectory from evaluating dispersion relation
         virtual complex evaluate(double s);
-
-        inline void set_initial_guess(std::array<double,2> alpha, double mu2 = 20) 
-        {
-            _azInitial = alpha[0]; _apInitial = alpha[1]; _mu2 = mu2;
-            this->initialize();
-        };
-        inline double initial_guess(double s){ return (_azInitial + _apInitial * s) / sqrt(1. + s / _mu2); };
 
         // Output the real or imaginary parts along real line
         double real_part(double s);
@@ -120,9 +108,7 @@ namespace analyticRT
         inline virtual double LHC(double s){ return 0.; };
 
         // -------------------------------------------------------------------
-        protected:
-
-        virtual void initialize(){};
+        protected:       
 
         // Change number of expected parameters
         // We dont want this changing outside of the class itself
@@ -134,12 +120,6 @@ namespace analyticRT
 
         // Once-subtracted DR parameters
         double _sSUB = 0., _alphaSUB = 0.;
-
-        // Maximum number of iterations to calculate
-        int _Niters = 0;
-
-        // In iterative solutions we will need to be able to change the inital guess at the real part        
-        double _azInitial = 0.5, _apInitial = 0.9, _mu2 = 20;
 
         // -------------------------------------------------------------------
         private:

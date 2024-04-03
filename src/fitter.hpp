@@ -14,9 +14,11 @@
 #include "kinematics.hpp"
 #include "isobar.hpp"
 #include "trajectory.hpp"
+#include "iterable.hpp"
 #include "data_set.hpp"
 #include "print.hpp"
 
+#include <stdio.h>
 #include <chrono>
 #include <string>
 #include <vector>
@@ -54,14 +56,19 @@ namespace analyticRT
         std::string _message;
         bool   _fixed         = false;
         double _value         = 0;
+
         bool   _custom_limits = false;
         double _upper         = 0;
         double _lower         = 0;
         double _step          = 0.1;
+        bool   _positive      = false;
 
         // If this parameter is synced to be equal to another
         bool   _synced        = false;
         int    _sync_to       = -1; // Which param its synced to
+
+        // For iterative fits, we should save the vector of iterated values
+        std::vector<double> _itval, _iterr;
 
         static inline std::string default_label(int i)
         {
@@ -101,9 +108,9 @@ namespace analyticRT
         // -----------------------------------------------------------------------
         // Methods to add data to be fit against
 
-        inline void add_data(data_set data){ _N += data._N; _data.push_back(data); };
+        inline void add_data(data_set data){ _Ndata += data._N; _data.push_back(data); };
         inline void add_data(std::vector<data_set> data){ for (auto datum : data) add_data(datum); };
-        inline void clear_data(){ _data.clear(); _N = 0; };
+        inline void clear_data(){ _data.clear(); _Ndata = 0; };
 
         // -----------------------------------------------------------------------
         // Set limits, labels, and fix parameters
@@ -164,6 +171,14 @@ namespace analyticRT
             return set_parameter_limits(_pars[index], bounds, step);
         };
 
+        inline void set_parameter_posdef(parameter& par, bool x = true){ par._positive = x; };
+        inline void set_parameter_posdef(std::string label, bool x = true)
+        {
+            int index = find_parameter(label);
+            if (index < 0) return;
+            set_parameter_posdef(_pars[index], x);
+        };
+            
         inline void fix_parameter(parameter& par, double val)
         {
             // If parameter is already fixed, just update the fixed val
@@ -331,7 +346,7 @@ namespace analyticRT
                 // Compare with previous best and update
                 if ( first_fit || fcn() < _best_fcn)
                 {
-                    _best_fcn_dof = _minuit->MinValue() / (_N - _minuit->NFree());
+                    _best_fcn_dof = _minuit->MinValue() / (_Ndata - _minuit->NFree());
                     _best_fcn     = _minuit->MinValue();
                     _best_pars    = convert(_minuit->X());
                     _best_errs    = convert(_minuit->Errors());
@@ -345,6 +360,67 @@ namespace analyticRT
             std::cout << std::left << "Best fit found after N = " + std::to_string(N) + " iterations" << std::endl;
             line();
             print_results(false);
+        };
+
+        inline void do_iterative_fit(int N, std::string filename = "")
+        {
+            using std::cout; using std::left; using std::endl; using std::setw;
+            cout << std::setprecision(8);
+            cout << left;
+
+            std::shared_ptr<iterable> iter_trajectory = std::dynamic_pointer_cast<iterable>(_trajectory);
+            if (iter_trajectory == nullptr)
+            {
+                warning("fitter::do_iterative_fit()", "Trajectory (" + _trajectory->id() + ") is not an iterable model! Returning...");
+                return;
+            };  
+            if (N <= 0) return;
+
+            // Do out fit with random guess
+            divider(); print("Doing initial fit with uniterated trajectory...");
+            do_fit();
+            
+
+            // For each subsequent fit we grab the previous best fit parameters
+            // and use them as the seed for the new fit after calling trajectory::iterate()
+            divider(); print("Commencing iterative refitting..."); line();
+
+            std::vector<double> fcns, last_pars, last_errors; 
+            for (int i = 0; i <= N; i++)
+            {
+                last_pars   = convert(_minuit->X());
+                last_errors = convert(_minuit->Errors());
+                std::vector<double> next_pars;
+
+                // We have to filter fixed parameters
+                for (auto& par : _pars)
+                {
+                    if (!par._fixed && !par._synced) next_pars.push_back( last_pars[par._i] );
+
+                    // save each iteration inside the parameter for calling later in summary
+                    par._itval.push_back( last_pars[   par._i ] );
+                    par._iterr.push_back( last_errors[ par._i ] );
+                };
+                fcns.push_back(_minuit->MinValue());
+
+                if (i != N)
+                {
+                    iter_trajectory->iterate();
+
+                    // Refit
+                    std::cout << std::left << "Iteration (" + std::to_string(i+1) + "/" + std::to_string(N) + "):" << std::endl;
+                    do_fit(next_pars, false);
+                }
+            };
+
+            print_iteration_results(fcns);
+
+            if (filename != "")
+            {
+                freopen(filename.c_str(),"w", stdout);
+                print_iteration_results(fcns);
+                fclose(stdout);
+            };
         };
 
         // Return a vector of best-fit parameters from last fit
@@ -367,7 +443,7 @@ namespace analyticRT
         // -----------------------------------------------------------------------
         // Data handling
 
-        int _N = 0;  // Total number of data points
+        int _Ndata = 0;  // Total number of data points
         std::vector<data_set> _data;  // Contain all data
 
         // -----------------------------------------------------------------------
@@ -398,6 +474,7 @@ namespace analyticRT
             {   
                 if (par._fixed || par._synced) continue;
                 _minuit->SetVariable(i, par._label, starting_guess[i], par._step);
+                if (par._positive)      _minuit->SetVariableLowerLimit(i, 0.);
                 if (par._custom_limits) _minuit->SetVariableLimits(i, par._lower, par._upper);
                 i++; // move index up
             };
@@ -519,14 +596,14 @@ namespace analyticRT
             };
             if (_isobar != nullptr && _trajectory != nullptr) conjunction = " and ";
 
-            cout << "Fitting " << iso_name + conjunction + traj_name << " to " << _N << " data points:" << endl;
+            cout << "Fitting " << iso_name + conjunction + traj_name << endl;
 
             line();
-            cout << setw(25) << "DATA SET"         << setw(30) << "TYPE     "      << setw(10) << "POINTS" << endl;
-            cout << setw(25) << "----------------" << setw(30) << "--------------" << setw(10) << "-------" << endl;
+            cout << setw(25) << "DATA SET"         << setw(25) << "TYPE     "      << setw(5) << "POINTS" << endl;
+            cout << setw(25) << "----------------" << setw(25) << "--------------" << setw(5) << "-------" << endl;
             for (auto data : _data)
             {
-                cout << setw(25) << data._id  << setw(30)  << F::data_type(data._type)  << setw(10) << data._N << endl;  
+                cout << setw(25) << data._id  << setw(25)  << F::data_type(data._type)  << setw(5) << data._N << endl;  
             };
         };
 
@@ -623,7 +700,7 @@ namespace analyticRT
             cout << std::setprecision(8);
             cout << left;
 
-            int dof                  = _N - _minuit->NFree();
+            int dof                  = _Ndata - _minuit->NFree();
             double fcn               = (last_fit) ? _minuit->MinValue()               : _best_fcn;
             double fcn_dof           = (last_fit) ? _minuit->MinValue() / double(dof) : _best_fcn_dof;
             std::vector<double> pars = (last_fit) ? convert(_minuit->X())             : _best_pars;
@@ -653,8 +730,8 @@ namespace analyticRT
             if (_trajectory != nullptr)
             {
                 line(); centered(4, "Trajectory parameters"); divider(4);            
-                cout << left << setw(10) << "id"     << setw(16) << "PARAMETER"  << setw(18) << "FIT VALUE"    << setw(18) << "ERROR"        << endl;
-                cout << left << setw(10) << "-----" << setw(16) << "----------" << setw(18) << "------------" << setw(18) << "------------" << endl;
+                cout << left << setw(10) << "id"     << setw(17) << "PARAMETER"  << setw(20) << "FIT VALUE"    << setw(20) << "ERROR"        << endl;
+                cout << left << setw(10) << "-----"  << setw(17) << "----------" << setw(20) << "------------" << setw(20) << "------------" << endl;
             };
             for (int k = _Niso; k < _Niso + _Ntraj; k++)
             {
@@ -668,8 +745,8 @@ namespace analyticRT
 
             line(); divider(); line();
             
-            // // At the end update the amplitude parameters to include the fit results
-            // _amplitude->set_parameters(pars);
+            // At the end update the amplitude parameters to include the fit results
+            allocate_parameters(pars);
 
             _fcn      = fcn;
             _fcn_dof  = fcn_dof;
@@ -677,6 +754,44 @@ namespace analyticRT
 
             // Let rest of the fitter that a fit result has been saved
             _fit = true;
+        };
+
+        inline void print_iteration_results(std::vector<double>& fcns)
+        {
+            // Print a summary of all the results
+            divider(); line();
+            centered(4, "SUMMARY OF ITERATIVE FIT RESULTS");
+            line(); divider(); line();
+
+            data_info();
+            line();
+
+            divider(); print("Parameters excluded from fit:");
+            print("----------------------------------------");
+            for (auto par : _pars)
+            {
+                if (par._fixed)  cout << setw(15) << "-- " + par._label  << setw(15) << " fixed to "  << setw(15) << std::to_string(par._value) << endl;
+                if (par._synced) cout << setw(15) << "-- " + par._label  << setw(15) << " synced to " << setw(15) << _pars[par._sync_to]._label << endl;
+            };
+            line();
+
+            divider();
+            double dof = _Ndata - _minuit->NFree();
+            cout << setw(15) << "iter" << setw(25) << "fcn" << setw(25) << "fcn/dof" << endl; 
+            cout << setw(15) << "-----" << setw(25) << "-------------" << setw(25) << "-------------" << endl; 
+            for (int n = 0; n < fcns.size(); n++) cout << setw(15) << n << setw(25) << fcns[n] << setw(25) << fcns[n]/dof << endl; 
+            divider(); line();
+
+            for (auto par : _pars)
+            {
+                if (par._fixed || par._synced) continue;
+
+                centered(4, par._label); divider();
+                cout << setw(15) << "iter" << setw(25) << "FIT VALUE" << setw(25) << "ERROR" << endl; 
+                cout << setw(15) << "-----" << setw(25) << "-------------" << setw(25) << "-------------" << endl; 
+                for (int j = 0; j < fcns.size(); j++) cout << setw(15) << j << setw(25) << par._itval[j] << setw(25) << par._iterr[j] << endl; 
+                divider(); line();
+            };
         };
     };
 };

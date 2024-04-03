@@ -21,21 +21,26 @@ namespace analyticRT
         breit_wigner(key x, unsigned int isospin, int j, std::string id)
         : raw_isobar(x, isospin, id), _j(j)
         {
-            set_Nfree(3);
+            set_Npars(3);
         };
 
         // Evaluate the full term with angular dependence
-        complex evaluate(double s, double zs)
+        inline complex evaluate(double s, double zs)
         {
             return _g * legendre_P(_j, zs) / (s - _mass*_mass + I*csqrt(s - STH)*_width);
         };
 
         // Allocate free parameters
-        void allocate_parameters(std::vector<double> pars)
+        inline void allocate_parameters(std::vector<double> pars)
         {
             _g     = pars[0];
             _mass  = pars[1];
             _width = pars[2];
+        };
+
+        inline std::vector<std::string> parameter_labels()
+        {
+            return {"g", "mass", "width"};
         };
 
         protected:

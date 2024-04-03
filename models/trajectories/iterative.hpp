@@ -13,13 +13,13 @@
 
 namespace analyticRT
 {
-    class iterative : public raw_trajectory
+    class iterative : public iterable
     {
         public: 
 
         // Explicitly only allow a RHC
         iterative(double R, std::string id)
-        : raw_trajectory(R, 4, id)
+        : iterable(R, 4, id)
         {
             initialize();
         };
@@ -34,26 +34,13 @@ namespace analyticRT
 
             // Individual couplings
             _coeffs.clear();
-            for (int i = 3; i < Nfree(); i++)
-            {
-                _coeffs.push_back(pars[i]);
-            }
-
-            for (int i = 0; i < _Niters; i++)
-            {
-                iterate();
-            };
+            for (int i = 3; i < N_pars(); i++) _coeffs.push_back(pars[i]);
         };
 
         inline std::vector<std::string> parameter_labels()
         {
             std::vector<std::string> labels = {"Lambda^2", "alpha(0)", "gamma"};
-
-            for (int i = 3; i < Nfree(); i++)
-            {
-                labels.push_back( "c[" + std::to_string(i-2) + "]");
-            };
-
+            for (int i = 3; i < N_pars(); i++) labels.push_back( "c[" + std::to_string(i-2) + "]");
             return labels;
         };
 

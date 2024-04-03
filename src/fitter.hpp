@@ -385,9 +385,11 @@ namespace analyticRT
             // and use them as the seed for the new fit after calling trajectory::iterate()
             divider(); print("Commencing iterative refitting..."); line();
 
-            std::vector<double> fcns, last_pars, last_errors; 
+            std::vector<double> fcns, last_pars, last_errors, times; 
             for (int i = 0; i <= N; i++)
             {
+                auto start = std::chrono::high_resolution_clock::now();
+
                 last_pars   = convert(_minuit->X());
                 last_errors = convert(_minuit->Errors());
                 std::vector<double> next_pars;
@@ -411,16 +413,49 @@ namespace analyticRT
                     std::cout << std::left << "Iteration (" + std::to_string(i+1) + "/" + std::to_string(N) + "):" << std::endl;
                     do_fit(next_pars, false);
                 }
+
+                // Timing info
+                auto stop     = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast< std::chrono::seconds>(stop - start);
+                times.push_back(duration.count());
             };
 
-            print_iteration_results(fcns);
+            print_iteration_results(fcns, times);
 
-            if (filename != "")
+            if (filename == "") return;
+
+            // Save the summary and the parameters from each iteration to files
+            std::string summary = filename + "_summary.txt";
+            freopen(summary.c_str(),"w", stdout);
+            print_iteration_results(fcns, times);
+            fclose(stdout);
+
+            std::string results = filename + "_pars.txt";
+            freopen(results.c_str(),"w", stdout);
+            
+            for (auto &par : _pars) 
             {
-                freopen(filename.c_str(),"w", stdout);
-                print_iteration_results(fcns);
-                fclose(stdout);
+                if (par._i == 0) cout << setw(20) << "#" + par._label;
+                else             cout << setw(20) << par._label;
             };
+            cout << endl;
+
+            for (int i = 0; i < fcns.size(); i++)
+            {
+                for (auto &par : _pars)
+                {
+                    if (par._fixed) { cout << setw(20) << par._value; continue; }
+                    if (par._synced)
+                    { 
+                        if (!_pars[par._sync_to]._fixed) cout << setw(20) << _pars[par._sync_to]._itval[i];
+                        else                             cout << setw(20) << _pars[par._sync_to]._value;
+                        continue;
+                    };
+                    cout << setw(20) << par._itval[i];
+                };
+                cout << endl;
+            };
+            fclose(stdout);
         };
 
         // Return a vector of best-fit parameters from last fit
@@ -756,22 +791,35 @@ namespace analyticRT
             _fit = true;
         };
 
-        inline void print_iteration_results(std::vector<double>& fcns)
+        inline void print_iteration_results(std::vector<double>& fcns, std::vector<double>& times)
         {
+            using std::cout; using std::left; using std::endl; using std::setw;
+            cout << std::setprecision(8);
+            cout << left;
+
+
             // Print a summary of all the results
             divider(); line();
             centered(4, "SUMMARY OF ITERATIVE FIT RESULTS");
             line(); divider(); line();
 
+            double avg = 0;
+            for (auto t : times){ avg += t; };
+            avg /= times.size();
+            cout << std::setprecision(2);
+            cout << setw(30) << "Number of iterations: " << fcns.size()-1 << endl;
+            cout << setw(30) << "Average time per iteration: " << avg << " s" << endl; line();
+            cout << std::setprecision(8);
+
             data_info();
             line();
 
-            divider(); print("Parameters excluded from fit:");
+            divider(); print("Parameters excluded from fits:");
             print("----------------------------------------");
             for (auto par : _pars)
             {
-                if (par._fixed)  cout << setw(15) << "-- " + par._label  << setw(15) << " fixed to "  << setw(15) << std::to_string(par._value) << endl;
-                if (par._synced) cout << setw(15) << "-- " + par._label  << setw(15) << " synced to " << setw(15) << _pars[par._sync_to]._label << endl;
+                if (par._fixed)  cout << setw(15) << "-- " + par._label  << setw(15) << " fixed to "    << setw(15) << std::to_string(par._value) << endl;
+                if (par._synced) cout << setw(15) << "-- " + par._label  << setw(15) << " synced with " << setw(15) << _pars[par._sync_to]._label << endl;
             };
             line();
 
@@ -780,7 +828,7 @@ namespace analyticRT
             cout << setw(15) << "iter" << setw(25) << "fcn" << setw(25) << "fcn/dof" << endl; 
             cout << setw(15) << "-----" << setw(25) << "-------------" << setw(25) << "-------------" << endl; 
             for (int n = 0; n < fcns.size(); n++) cout << setw(15) << n << setw(25) << fcns[n] << setw(25) << fcns[n]/dof << endl; 
-            divider(); line();
+            line(); divider(); line();
 
             for (auto par : _pars)
             {
@@ -790,7 +838,7 @@ namespace analyticRT
                 cout << setw(15) << "iter" << setw(25) << "FIT VALUE" << setw(25) << "ERROR" << endl; 
                 cout << setw(15) << "-----" << setw(25) << "-------------" << setw(25) << "-------------" << endl; 
                 for (int j = 0; j < fcns.size(); j++) cout << setw(15) << j << setw(25) << par._itval[j] << setw(25) << par._iterr[j] << endl; 
-                divider(); line();
+                line(); divider(); line();
             };
         };
     };

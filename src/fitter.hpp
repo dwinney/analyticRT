@@ -430,28 +430,30 @@ namespace analyticRT
             print_iteration_results(fcns, times);
             fclose(stdout);
 
+            // Also print a file tabulating the parameters of the trajectory
+            // This allows us to calculate the "path dependent" iteration
             std::string results = filename + "_pars.txt";
             freopen(results.c_str(),"w", stdout);
             
-            for (auto &par : _pars) 
+            for (int i = _Niso; i < _pars.size(); i++) 
             {
-                if (par._i == 0) cout << setw(20) << "#" + par._label;
-                else             cout << setw(20) << par._label;
+                if (_pars[i]._i == _Niso) cout << setw(20) << "#" + _pars[i]._label;
+                else                  cout << setw(20) << _pars[i]._label;
             };
             cout << endl;
 
-            for (int i = 0; i < fcns.size(); i++)
+            for (int n = 0; n < fcns.size(); n++)
             {
-                for (auto &par : _pars)
+                for (int i = _Niso; i < _pars.size(); i++) 
                 {
-                    if (par._fixed) { cout << setw(20) << par._value; continue; }
-                    if (par._synced)
+                    if (_pars[i]._fixed) { cout << setw(20) << _pars[i]._value; continue; }
+                    if (_pars[i]._synced)
                     { 
-                        if (!_pars[par._sync_to]._fixed) cout << setw(20) << _pars[par._sync_to]._itval[i];
-                        else                             cout << setw(20) << _pars[par._sync_to]._value;
+                        if (!_pars[_pars[i]._sync_to]._fixed) cout << setw(20) << _pars[_pars[i]._sync_to]._itval[n];
+                        else                                  cout << setw(20) << _pars[_pars[i]._sync_to]._value;
                         continue;
                     };
-                    cout << setw(20) << par._itval[i];
+                    cout << setw(20) << _pars[i]._itval[n];
                 };
                 cout << endl;
             };

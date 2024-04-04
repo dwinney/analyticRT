@@ -616,7 +616,7 @@ namespace analyticRT
                 {
                     vals.push_back(0);
                     synced_pars.push_back(par._i);
-                    par._message = "[= " + std::to_string(par._sync_to) + "]";
+                    par._message = "[= " + _pars[par._sync_to]._label + "]";
                     continue;
                 };
 
@@ -627,6 +627,9 @@ namespace analyticRT
                     par._message  =  "[FIXED]";
                     continue;
                 }
+
+                // if posdef
+                if (par._positive) par._message  =  "[> 0]";
 
                 par._value = starting_guess[i];
                 vals.push_back(par._value);

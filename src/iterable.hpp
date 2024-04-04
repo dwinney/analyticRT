@@ -15,15 +15,15 @@
 
 namespace analyticRT
 {
-    class iterable : public raw_trajectory
+    class raw_iterable : public raw_trajectory
     {
         public:
 
-        iterable(double R_th, std::string id)
+        raw_iterable(double R_th, std::string id)
         : raw_trajectory(R_th, id)
         { initialize(); };
 
-        iterable(double R_th, int N, std::string id)
+        raw_iterable(double R_th, int N, std::string id)
         : raw_trajectory(R_th, N, id)
         { initialize(); };
 
@@ -44,6 +44,7 @@ namespace analyticRT
         inline void set_interp_pars(int N, std::array<double,2> pars)
         {
             _Ninterp = N; _s1 = pars[0]; _sAsym = pars[1];
+            this->initialize();
         };
         
         // Evaluate the last saved iteration of the real part
@@ -61,12 +62,18 @@ namespace analyticRT
         ROOT::Math::Interpolator _ReAlphaInterp = ROOT::Math::Interpolator(2*_Ninterp, ROOT::Math::Interpolation::kCSPLINE);
 
         // Or at asymptotic arguments we match to a simple square-root
-        // double _s1 = 100,_sAsym = 5000, _ReAlphaAsym;
         double _s1 = 50,_sAsym = 200, _ReAlphaAsym;
 
         // Function to run all tasks needed to evaluate the first iteration
         // i.e. populate the interpolations with the inital_guess
         void initialize();
+    };
+
+    inline std::shared_ptr<raw_iterable> iterable(trajectory alpha)
+    {
+        std::shared_ptr<raw_iterable> ptr;
+        ptr = std::dynamic_pointer_cast<raw_iterable>(alpha);
+        return ptr;
     };
 };
 

@@ -14,12 +14,12 @@
 
 namespace analyticRT
 {
-    class unitary : public iterable
+    class unitary : public raw_iterable
     {
         public:
 
         unitary(double R, int jmin, std::string id)
-        : iterable(R, 4, id), _jmin(jmin)
+        : raw_iterable(R, 4, id), _jmin(jmin)
         {};
 
         protected:
@@ -46,9 +46,8 @@ namespace analyticRT
             double gamma = _gamma / PI;
 
             // For numerical stability, at asymptotic argumenets, simplify the equation
-            if (s > 100) return gamma*( (previousRePart(s)+_jmin) *log(q2hat) + log(rho*beta/gamma));
-
-            return gamma*log(1. + rho*beta/gamma*pow(q2hat,previousRePart(s)));
+            if (s > 100) return gamma*( (previousRePart(s)+1)*log(q2hat) + log(rho*beta/gamma));
+            return gamma*log(1. + rho*beta/gamma* q2hat *(1. + pow(q2hat, previousRePart(s))));         
         };
 
         protected:

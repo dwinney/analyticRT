@@ -369,7 +369,7 @@ namespace analyticRT
             cout << std::setprecision(8);
             cout << left;
 
-            std::shared_ptr<iterable> iter_trajectory = std::dynamic_pointer_cast<iterable>(_trajectory);
+            auto iter_trajectory = iterable(_trajectory);
             if (iter_trajectory == nullptr)
             {
                 warning("fitter::do_iterative_fit()", "Trajectory (" + _trajectory->id() + ") is not an iterable model! Returning...");
@@ -390,7 +390,7 @@ namespace analyticRT
             cout << std::setprecision(8);
             cout << left;
 
-            std::shared_ptr<iterable> iter_trajectory = std::dynamic_pointer_cast<iterable>(_trajectory);
+            auto iter_trajectory = iterable(_trajectory);
             if (iter_trajectory == nullptr)
             {
                 warning("fitter::do_iterative_fit()", "Trajectory (" + _trajectory->id() + ") is not an iterable model! Returning...");
@@ -741,7 +741,7 @@ namespace analyticRT
             _fit = true;
         };
 
-        inline void start_iterations(int N, std::shared_ptr<iterable> iter_trajectory, std::string filename)
+        inline void start_iterations(int N, std::shared_ptr<raw_iterable> iter_trajectory, std::string filename)
         {
             // For each subsequent fit we grab the previous best fit parameters
             // and use them as the seed for the new fit after calling trajectory::iterate()

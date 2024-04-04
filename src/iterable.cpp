@@ -11,7 +11,7 @@
 
 namespace analyticRT
 {
-    void iterable::initialize()
+    void raw_iterable::initialize()
     {
         // Save an interpolation of the real part using previous iteration
         std::vector<double> s, realpha;
@@ -40,7 +40,7 @@ namespace analyticRT
 
     // Calculate the next iteration
     // Basically the same as initialize() except with the previous real part
-    void iterable::iterate()
+    void raw_iterable::iterate()
     {
         // Save an interpolation of the real part using previous iteration
         std::vector<double> s, realpha;

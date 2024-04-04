@@ -16,12 +16,12 @@
 
 namespace analyticRT
 {
-    class k_matrix : public iterable
+    class k_matrix : public raw_iterable
     {
         public: 
 
         k_matrix(double RHC, std::string id)
-        : iterable(RHC, 4, id)
+        : raw_iterable(RHC, 4, id)
         {};
 
         // RHC given by the log with generic polynomial residue 

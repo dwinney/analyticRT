@@ -8,8 +8,8 @@
 // Email:        daniel.winney@gmail.com
 // ------------------------------------------------------------------------------
 
-#ifndef TRAJECTORY_DATA_HPP
-#define TRAJECTORY_DATA_HPP
+#ifndef SPECTRUM_DATA_HPP
+#define SPECTRUM_DATA_HPP
 
 #include "data_set.hpp"
 #include "elementwise.hpp"

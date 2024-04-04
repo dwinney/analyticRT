@@ -125,13 +125,13 @@ namespace analyticRT
             std::vector<std::string> iso_labels = {};
             if (_isobar != nullptr)
             {
-                _Niso        = _isobar->N_pars();
+                _Niso        = _isobar->Npars();
                 iso_labels   = _isobar->parameter_labels();
             };
             std::vector<std::string> traj_labels = {};
             if (_trajectory != nullptr)
             {
-                _Ntraj      = _trajectory->N_pars();
+                _Ntraj      = _trajectory->Npars();
                 traj_labels = _trajectory->parameter_labels();
             };
 
@@ -241,7 +241,7 @@ namespace analyticRT
         // Change the guess range for initializing parameters
         inline void set_guess_range(std::array<double,2> bounds){ _guess_range = bounds; };
 
-        // Actually do the fit given a vector of size N_pars as starting values
+        // Actually do the fit given a vector of size Npars as starting values
         // Prints results to command line but also returns the best-fit chi2 value
         inline void do_fit(std::vector<double> starting_guess, bool show_data = true)
         {

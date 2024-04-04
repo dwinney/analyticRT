@@ -25,6 +25,8 @@ namespace analyticRT
     class raw_trajectory;
     using trajectory = std::shared_ptr<raw_trajectory>;
 
+    class iterable;
+
     // Instead of the constructors of raw_trajectory we use this function
     // to create trajectory pointers which can then be put into amplitudes
     template<class A>
@@ -71,7 +73,7 @@ namespace analyticRT
         // Use set_parameters to set free variables
         // this checks that the size is the expected size
         void set_parameters( std::vector<double> pars);
-        inline int N_pars(){ return _Npars; };
+        inline int Npars(){ return _Npars; };
 
         // This function actually distributes paramters to the model and must be specified
         virtual inline void allocate_parameters(std::vector<double> pars){ return; };
@@ -106,6 +108,10 @@ namespace analyticRT
 
         // LHC is optional and will default to 0
         inline virtual double LHC(double s){ return 0.; };
+
+        // Function to iterate the dispersion relation.
+        // BY default we assume this does nothing, but will instead get overridden in iterable derived class
+        inline virtual void iterate(){ return; };
 
         // -------------------------------------------------------------------
         protected:       

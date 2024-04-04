@@ -8,29 +8,64 @@
 // [1] arXiv:hep-ph/0011035
 // ---------------------------------------------------------------------------
 
-#include "trajectory_data.hpp"
-#include "trajectory_plots.hpp"
-#include "spectrum_fitter.hpp"
-#include "trajectories/iterative.hpp"
+#include "spectrum_data.hpp"
+#include "spectrum_plots.hpp"
+#include "fitter.hpp"
+#include "trajectories/k_matrix.hpp"
 #include "trajectories/fiore.hpp"
+
+using namespace analyticRT;
+
+struct spectrum_fit
+{
+    static std::string data_type(int i){ return "Masses and Widths"; };
+
+    // We add a small fictious error to the spins from the uncertainty in the masses
+    // Therefore we minimize chi2 instead of difference of squares
+    static double fcn(const std::vector<data_set> &data_sets, isobar iso, trajectory traj)
+    { 
+        double chi2 = 0; 
+        for (auto &data : data_sets)
+        {
+            for (int i = 0; i < data._N; i++)
+            {
+                double s = pow(data._x[i], 2);
+
+                double spin_th  = traj->real_part(s);
+                double spin_ex  = data._y[i];
+                double spin_err = data._dy[i];
+                chi2 += pow((spin_th - spin_ex)/spin_err, 2);
+                
+                double width_th  = traj->width(s);
+                double width_ex  = data._z[i];
+                double width_err = data._dz[i];
+                chi2 += pow((width_th - width_ex)/width_err, 2);
+            };
+        };
+        return chi2; 
+    };
+};
 
 void fit()
 {   
     using namespace analyticRT;
 
-    trajectory alpha = new_trajectory<iterative>(4.*M2_PION, "Iterated trajectory");
+    trajectory alpha = new_trajectory<k_matrix>(4.*M2_PION, "Iterated trajectory");
     alpha->set_option(2);
 
-    spectrum_fitter fitter(alpha);
-    fitter.add_data( isovector_spectrum() );
+    fitter<spectrum_fit> fitter(nullptr, alpha);
+    fitter.add_data( rho_spectrum() );
+    fitter.add_data( a_spectrum() );
     
-    fitter.fix_parameter("Lambda^2", 1.1);
-    fitter.set_parameter_limits("alpha(0)", {0.,  1  });
-    fitter.set_parameter_limits("gamma",    {0.1, 2. });
-    fitter.set_parameter_limits("c[1]",     {0.,  300.});
-    fitter.set_parameter_limits("c[2]",     {0.,  300.});
+    fitter.fix_parameter("Lambda^2", 1.5);
+
+    fitter.set_parameter_limits("alpha(0)", {0.,  1.});
+
+    fitter.set_parameter_posdef("gamma");
+    fitter.set_parameter_posdef("c[1]");
+    fitter.set_parameter_posdef("c[2]");
     
-    fitter.iterative_fit(5);
+    fitter.do_iterative_fit(5);
 
     // Set up plotter
     plotter plotter;

@@ -6,10 +6,10 @@
 // Email:        daniel.winney@gmail.com
 // ------------------------------------------------------------------------------
 
-#ifndef TRAJECTORY_PLOTS_HPP
-#define TRAJECTORY_PLOTS_HPP
+#ifndef SPECTRUM_PLOTS_HPP
+#define SPECTRUM_PLOTS_HPP
 
-#include "trajectory_data.hpp"
+#include "spectrum_data.hpp"
 #include "elementwise.hpp"
 #include "plotter.hpp"
 #include "plot.hpp"

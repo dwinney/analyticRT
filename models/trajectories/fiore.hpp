@@ -1,4 +1,8 @@
-// Trajectory resulting from the model in [1]
+// Dispersive trajectory resulting from the model in [1].
+// Its technically iterative but not in the same way since each iteration just
+// fits a constants
+//
+// So despite being iterative we dont inherit from iterable class
 //
 // Author:       Daniel Winney (2023)
 // Affiliation:  Joint Physics Analysis Center (JPAC)
@@ -23,23 +27,16 @@ namespace analyticRT
         fiore(double R, std::string id)
         : raw_trajectory(R, id)
         {
-            set_Npars(4);
-            initialize();
-            max_iterations(3);
+            set_Npars(4); 
+            initialize(); 
         };
 
         // Parameters are the intercept and coupling
         inline void allocate_parameters(std::vector<double> pars)
         {
             set_subtraction(0., pars[0]);
-            _c[0] = pars[1];
-            _c[1] = pars[2];
-            _c[2] = pars[3];
-
-            for (int i = 0; i < _Niters; i++)
-            {
-                iterate();
-            };
+            for (int i = 1; i < Npars(); i++) _c[i-1] = pars[i];
+            iterate();
         };
 
         inline std::vector<std::string> parameter_labels()
@@ -67,19 +64,13 @@ namespace analyticRT
 
         inline void initialize()
         {
-            for (int i = 0; i < 3; i++)
-            {
-                _lam[i] = 0.491 + 0.874*_s[i];
-            };
+            for (int i = 0; i < 3; i++) _lam[i] = 0.491 + 0.874*_s[i];
         };
 
         // Iteration procedure for lambdas
         inline void iterate()
         {
-            for (int i = 0; i < 3; i++)
-            {
-                _lam[i] = real_part(_s[i]);
-            };
+            for (int i = 0; i < 3; i++) _lam[i] = real_part(_s[i]);
         };
     };
 };

@@ -21,7 +21,7 @@ namespace analyticRT
         hypergeometric(key x, unsigned int isospin, trajectory alpha, std::string id)
         : raw_isobar(x, isospin, id), _alpha(alpha)
         {
-            set_Nfree(2);
+            set_Npars(2);
         };
 
         // Evaluate the full term with angular dependence
@@ -57,8 +57,8 @@ namespace analyticRT
             _option = x;
             switch (x)
             {
-                case kFixAlpha:   { set_Nfree(2);                   return; }
-                case kFloatAlpha: { set_Nfree(2 + _alpha->Nfree()); return; }
+                case kFixAlpha:   { set_Npars(2);                   return; }
+                case kFloatAlpha: { set_Npars(2 + _alpha->Npars()); return; }
                 default: option_error();
             };
         };

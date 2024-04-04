@@ -9,16 +9,16 @@
 // [1] arXiv:hep-ph/0011035
 // ---------------------------------------------------------------------------
 
-#include "trajectory_data.hpp"
-#include "trajectory_plots.hpp"
+#include "spectrum_data.hpp"
+#include "spectrum_plots.hpp"
 #include "fitter.hpp"
-#include "trajectories/iterative.hpp"
+#include "trajectories/k_matrix.hpp"
 
 void iterations()
 {   
     using namespace analyticRT;
 
-    trajectory alpha = new_trajectory<iterative>(4.*M2_PION);
+    trajectory alpha = new_trajectory<k_matrix>(4.*M2_PION, "Iterative");
     alpha->set_option(1);
     
     std::vector<double> pars = {1.0, 0.532629947, 1.04260251, 43.4117231};
@@ -43,18 +43,16 @@ void iterations()
     plot replot = isovector_spins(plotter);
     replot.set_curve_points(200);
 
-    auto plot_iter = [&](int n)
+    int n = 0;
+    auto plot_iter = [&]()
     {
-        alpha->max_iterations(n);
         alpha->set_parameters(pars);
         replot.add_curve( {-2, 7.5}, realpha, "n = " + std::to_string(n));
         replot.add_dashed({-2, 7.5}, imalpha);
+        alpha->iterate(); n++;
     };
 
-    plot_iter(0);
-    plot_iter(1);
-    plot_iter(2);
-    plot_iter(3);
+    for (int i = 0; i <= 5; i++) plot_iter();
 
     replot.set_legend(0.4, 0.7);
     replot.set_legend_spacing(0.02);

@@ -20,9 +20,7 @@ namespace analyticRT
         // Explicitly only allow a RHC
         linear(double Rth, std::string id)
         : raw_trajectory(Rth, id)
-        {
-            set_Npars(3);
-        };
+        { set_Npars(3); };
 
         // Instead of defining the discontinuity and letting the dispersion relation
         // calculate everything, override real and imaginary parts directly

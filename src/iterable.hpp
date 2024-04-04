@@ -21,16 +21,16 @@ namespace analyticRT
 
         iterable(double R_th, std::string id)
         : raw_trajectory(R_th, id)
-        {};
+        { initialize(); };
 
         iterable(double R_th, int N, std::string id)
         : raw_trajectory(R_th, N, id)
-        {};
+        { initialize(); };
 
         // This is the primary new function, which is to calculate the next iteration
         // We want to control exactly when we iterate in case we need to change parameters
         // in between iterations
-        virtual void iterate();
+        void iterate();
 
         // Here is the initial guess of the real part
         inline void set_initial_pars(std::array<double,2> alpha, double mu2 = 20) 
@@ -45,7 +45,10 @@ namespace analyticRT
         {
             _Ninterp = N; _s1 = pars[0]; _sAsym = pars[1];
         };
-
+        
+        // Evaluate the last saved iteration of the real part
+        inline double previousRePart(double s){ return (s < _sAsym) ? _ReAlphaInterp.Eval(s) : _ReAlphaAsym * sqrt(s / _sAsym); };
+        
         // ---------------------------------------------------------------------------
     
         protected: 
@@ -54,15 +57,16 @@ namespace analyticRT
         double _azInitial = 0.5, _apInitial = 0.9, _mu2 = 20;
 
         // Save an interpolation of the real part evaluated from DR
-        int _Ninterp = 500; // Total interpolation will have 2*_Ninterp points
+        int _Ninterp = 100; // Total interpolation will have 2*_Ninterp points
         ROOT::Math::Interpolator _ReAlphaInterp = ROOT::Math::Interpolator(2*_Ninterp, ROOT::Math::Interpolation::kCSPLINE);
 
         // Or at asymptotic arguments we match to a simple square-root
-        double _s1 = 100,_sAsym = 5000, _ReAlphaAsym;
+        // double _s1 = 100,_sAsym = 5000, _ReAlphaAsym;
+        double _s1 = 50,_sAsym = 200, _ReAlphaAsym;
 
         // Function to run all tasks needed to evaluate the first iteration
         // i.e. populate the interpolations with the inital_guess
-        virtual void initialize();
+        void initialize();
     };
 };
 

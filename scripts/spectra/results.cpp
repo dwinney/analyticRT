@@ -8,22 +8,21 @@
 // [1] arXiv:hep-ph/0011035
 // ---------------------------------------------------------------------------
 
-#include "trajectory_plots.hpp"
+#include "spectrum_plots.hpp"
 #include "trajectory.hpp"
 #include "trajectories/fiore.hpp"
-#include "trajectories/iterative.hpp"
+#include "trajectories/k_matrix.hpp"
 
 void results()
 {   
     using namespace analyticRT;
 
     // Set up Fiore-type trajectory with parameters from [1]
-    trajectory alpha_fiore = new_trajectory<fiore>(4.*M2_PION);
+    trajectory alpha_fiore = new_trajectory<fiore>(4.*M2_PION, "Fiore");
     alpha_fiore->set_parameters({0.491, 0.140, 0.902, 28.031});
 
-    trajectory alpha = new_trajectory<iterative>(4.*M2_PION);
+    trajectory alpha = new_trajectory<k_matrix>(4.*M2_PION, "Us");
     alpha->set_option(1);
-    alpha->max_iterations(3);
     alpha->set_parameters({1.0, 0.532629947, 1.04260251, 43.4117231});
 
     auto re = [](trajectory alpha)

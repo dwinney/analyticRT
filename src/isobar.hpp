@@ -64,7 +64,7 @@ namespace analyticRT
             int n = 0;
             for (auto v : vs)
             {
-                n += v->N_pars();
+                n += v->Npars();
             }
             set_Npars(n);
         };
@@ -73,7 +73,7 @@ namespace analyticRT
         // Getters
 
         inline std::string id(){ return _id;    };         // string id 
-        inline int N_pars()    { return _Npars; };         // # of free parameters
+        inline int Npars()    { return _Npars; };         // # of free parameters
         inline unsigned int isospin(){ return _isospin; }; // fixed isospin
 
         // If the current isobar pointer describes a sum

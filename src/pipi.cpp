@@ -437,5 +437,31 @@ namespace analyticRT
             std::cout << "Invalid Inelasticity with l = " << l << " and isospin = " << iso << ". Quiting... \n";
             exit(1);
         }
-    }
+    };
+
+    // Produce a data_set with the specified partial wave
+    data_set pipi::partial_wave(int iso, int j, int N, std::array<double,2> range)
+    {
+        data_set out;
+        out._N    = N;
+
+        std::stringstream ss;
+        ss << std::setprecision(3) << "_[" << range[0] << "," << range[1] << "]";
+
+        out._id   = "pipi_" + std::to_string(iso) + "_" + std::to_string(j) + ss.str();
+        out._type = 0;
+
+        std::vector<double> s, re, im;
+        for (int i = 0; i < N; i++)
+        {
+            double  si = range[0] + double(i)*(range[1] - range[0])/double(N-1);
+            complex fi = pipi::partial_wave(iso, j, si);
+
+            out._x.push_back(si);
+            out._y.push_back(std::real(fi));
+            out._z.push_back(std::imag(fi));
+        };
+
+        return out;
+    };
 };

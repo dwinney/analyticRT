@@ -288,6 +288,7 @@ namespace analyticRT
                 if (par._synced){ synced_pars.push_back(par._i); continue; } // Flag any synced parameters, we'll come back to them
 
                 if (par._custom_limits) guess.push_back(_guesser->Uniform(par._lower, par._upper)); 
+                else if (par._positive) guess.push_back(_guesser->Uniform(0., _guess_range[1]));
                 else                    guess.push_back(_guesser->Uniform(_guess_range[0], _guess_range[1]));
                 par._value = guess.back();
             };  
@@ -362,6 +363,27 @@ namespace analyticRT
             print_results(false);
         };
 
+        inline void do_iterative_fit(std::vector<double> guess, int N, std::string filename = "")
+        {
+            using std::cout; using std::left; using std::endl; using std::setw;
+            cout << std::setprecision(8);
+            cout << left;
+
+            std::shared_ptr<iterable> iter_trajectory = std::dynamic_pointer_cast<iterable>(_trajectory);
+            if (iter_trajectory == nullptr)
+            {
+                warning("fitter::do_iterative_fit()", "Trajectory (" + _trajectory->id() + ") is not an iterable model! Returning...");
+                return;
+            };  
+            if (N <= 0) return;
+
+            // Do out fit with random guess
+            divider(); print("Doing initial fit with uniterated trajectory...");
+            do_fit(guess);
+            start_iterations(N, iter_trajectory, filename);
+        };
+
+
         inline void do_iterative_fit(int N, std::string filename = "")
         {
             using std::cout; using std::left; using std::endl; using std::setw;
@@ -380,84 +402,7 @@ namespace analyticRT
             divider(); print("Doing initial fit with uniterated trajectory...");
             do_fit();
             
-
-            // For each subsequent fit we grab the previous best fit parameters
-            // and use them as the seed for the new fit after calling trajectory::iterate()
-            divider(); print("Commencing iterative refitting..."); line();
-
-            std::vector<double> fcns, last_pars, last_errors, times; 
-            for (int i = 0; i <= N; i++)
-            {
-                auto start = std::chrono::high_resolution_clock::now();
-
-                last_pars   = convert(_minuit->X());
-                last_errors = convert(_minuit->Errors());
-                std::vector<double> next_pars;
-
-                // We have to filter fixed parameters
-                for (auto& par : _pars)
-                {
-                    if (!par._fixed && !par._synced) next_pars.push_back( last_pars[par._i] );
-
-                    // save each iteration inside the parameter for calling later in summary
-                    par._itval.push_back( last_pars[   par._i ] );
-                    par._iterr.push_back( last_errors[ par._i ] );
-                };
-                fcns.push_back(_minuit->MinValue());
-
-                if (i != N)
-                {
-                    iter_trajectory->iterate();
-
-                    // Refit
-                    std::cout << std::left << "Iteration (" + std::to_string(i+1) + "/" + std::to_string(N) + "):" << std::endl;
-                    do_fit(next_pars, false);
-                }
-
-                // Timing info
-                auto stop     = std::chrono::high_resolution_clock::now();
-                auto duration = std::chrono::duration_cast< std::chrono::seconds>(stop - start);
-                times.push_back(duration.count());
-            };
-
-            print_iteration_results(fcns, times);
-
-            if (filename == "") return;
-
-            // Save the summary and the parameters from each iteration to files
-            std::string summary = filename + "_summary.txt";
-            freopen(summary.c_str(),"w", stdout);
-            print_iteration_results(fcns, times);
-            fclose(stdout);
-
-            // Also print a file tabulating the parameters of the trajectory
-            // This allows us to calculate the "path dependent" iteration
-            std::string results = filename + "_pars.txt";
-            freopen(results.c_str(),"w", stdout);
-            
-            for (int i = _Niso; i < _pars.size(); i++) 
-            {
-                if (_pars[i]._i == _Niso) cout << setw(20) << "#" + _pars[i]._label;
-                else                  cout << setw(20) << _pars[i]._label;
-            };
-            cout << endl;
-
-            for (int n = 0; n < fcns.size(); n++)
-            {
-                for (int i = _Niso; i < _pars.size(); i++) 
-                {
-                    if (_pars[i]._fixed) { cout << setw(20) << _pars[i]._value; continue; }
-                    if (_pars[i]._synced)
-                    { 
-                        if (!_pars[_pars[i]._sync_to]._fixed) cout << setw(20) << _pars[_pars[i]._sync_to]._itval[n];
-                        else                                  cout << setw(20) << _pars[_pars[i]._sync_to]._value;
-                        continue;
-                    };
-                    cout << setw(20) << _pars[i]._itval[n];
-                };
-                cout << endl;
-            };
-            fclose(stdout);
+            start_iterations(N, iter_trajectory, filename);
         };
 
         // Return a vector of best-fit parameters from last fit
@@ -791,6 +736,87 @@ namespace analyticRT
 
             // Let rest of the fitter that a fit result has been saved
             _fit = true;
+        };
+
+        inline void start_iterations(int N, std::shared_ptr<iterable> iter_trajectory, std::string filename)
+        {
+            // For each subsequent fit we grab the previous best fit parameters
+            // and use them as the seed for the new fit after calling trajectory::iterate()
+            divider(); print("Commencing iterative refitting..."); line();
+
+            std::vector<double> fcns, last_pars, last_errors, times; 
+            for (int i = 0; i <= N; i++)
+            {
+                auto start = std::chrono::high_resolution_clock::now();
+
+                last_pars   = convert(_minuit->X());
+                last_errors = convert(_minuit->Errors());
+                std::vector<double> next_pars;
+
+                // We have to filter fixed parameters
+                for (auto& par : _pars)
+                {
+                    if (!par._fixed && !par._synced) next_pars.push_back( last_pars[par._i] );
+
+                    // save each iteration inside the parameter for calling later in summary
+                    par._itval.push_back( last_pars[   par._i ] );
+                    par._iterr.push_back( last_errors[ par._i ] );
+                };
+                fcns.push_back(_minuit->MinValue());
+
+                if (i != N)
+                {
+                    iter_trajectory->iterate();
+
+                    // Refit
+                    std::cout << std::left << "Iteration (" + std::to_string(i+1) + "/" + std::to_string(N) + "):" << std::endl;
+                    do_fit(next_pars, false);
+                }
+
+                // Timing info
+                auto stop     = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast< std::chrono::seconds>(stop - start);
+                times.push_back(duration.count());
+            };
+
+            print_iteration_results(fcns, times);
+
+            if (filename == "") return;
+
+            // Save the summary and the parameters from each iteration to files
+            std::string summary = filename + "_summary.txt";
+            freopen(summary.c_str(),"w", stdout);
+            print_iteration_results(fcns, times);
+            fclose(stdout);
+
+            // Also print a file tabulating the parameters of the trajectory
+            // This allows us to calculate the "path dependent" iteration
+            std::string results = filename + "_pars.txt";
+            freopen(results.c_str(),"w", stdout);
+            
+            for (int i = _Niso; i < _pars.size(); i++) 
+            {
+                if (_pars[i]._i == _Niso) cout << setw(20) << "#" + _pars[i]._label;
+                else                  cout << setw(20) << _pars[i]._label;
+            };
+            cout << endl;
+
+            for (int n = 0; n < fcns.size(); n++)
+            {
+                for (int i = _Niso; i < _pars.size(); i++) 
+                {
+                    if (_pars[i]._fixed) { cout << setw(20) << _pars[i]._value; continue; }
+                    if (_pars[i]._synced)
+                    { 
+                        if (!_pars[_pars[i]._sync_to]._fixed) cout << setw(20) << _pars[_pars[i]._sync_to]._itval[n];
+                        else                                  cout << setw(20) << _pars[_pars[i]._sync_to]._value;
+                        continue;
+                    };
+                    cout << setw(20) << _pars[i]._itval[n];
+                };
+                cout << endl;
+            };
+            fclose(stdout);
         };
 
         inline void print_iteration_results(std::vector<double>& fcns, std::vector<double>& times)

@@ -13,6 +13,7 @@
 
 #include "constants.hpp"
 #include "kinematics.hpp"
+#include "data_set.hpp"
 
 namespace analyticRT
 {
@@ -24,6 +25,8 @@ namespace analyticRT
         static double inelasticity(int iso, int j, double s);
         static inline complex partial_wave(int iso, int j, double s)
         {
+            if (s <= 4.*M_PION*M_PION) return 0.;
+            
             double delta, eta, k;
             complex amp;
 
@@ -35,6 +38,9 @@ namespace analyticRT
             amp /= phase_space(s) * (16.*PI);
             return amp;
         };
+
+        // Produce a data_set with the specified partial wave
+        static data_set partial_wave(int iso, int j, int N, std::array<double,2> range);
 
         private:
 

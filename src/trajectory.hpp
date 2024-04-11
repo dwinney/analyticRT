@@ -93,6 +93,9 @@ namespace analyticRT
         // Set the subtraction location for the dispersion relation
         inline void set_subtraction(double s_sub, double val){ _sSUB = s_sub; _alphaSUB = val; };
 
+        // Whether to allow the trajectory to have a pole on the real axis (i.e. a zero of the amplitude)
+        inline void add_pole(double sA, double gA){ _sA = sA; _gA = gA; };
+
         // Output the trajectory from evaluating dispersion relation
         virtual complex evaluate(double s);
 
@@ -126,6 +129,9 @@ namespace analyticRT
 
         // Once-subtracted DR parameters
         double _sSUB = 0., _alphaSUB = 0.;
+
+        // If we allow an adler zero
+        double _sA = 0., _gA = 0.;
 
         // -------------------------------------------------------------------
         private:

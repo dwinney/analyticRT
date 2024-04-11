@@ -8,6 +8,7 @@
 #include "isobars/truncated.hpp"
 #include "trajectories/unitary.hpp"
 
+#include "kinematics.hpp"
 #include "pipi.hpp"
 #include "trajectory.hpp"
 #include "isobar.hpp"
@@ -32,7 +33,8 @@ struct pipi_fit
                 std::complex<double> ex(data._y[i], data._z[i]); 
                 std::complex<double> th = iso->direct_projection(1, s);
 
-                dos += std::norm( std::imag(th) - 16*PI*std::imag(ex) );
+                dos += std::norm( std::imag(th) - std::imag(ex) );
+                dos += std::norm( std::real(th) - std::real(ex) );
             };
         };
         return dos; 
@@ -43,7 +45,7 @@ void pwave()
 {
     using namespace analyticRT;
 
-    // ---------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
     // For the I = 1 we can assume for now that there is a single trajectory
 
     // Given by the dispersive form
@@ -53,10 +55,10 @@ void pwave()
     // The trajectory defines an isobar
     isobar rho = new_isobar<truncated>(1, 5, alpha, "I = 1");
 
-    data_set pipi_pwave = pipi::partial_wave(1, 1, 5, {0., 0.8});
+    data_set pipi_pwave = pipi::partial_wave(1, 1, 10, {0.1, 1.0});
 
     fitter<pipi_fit> fitter(rho, alpha);
-    fitter.set_parameter_labels({"g (iso)", "lam2 (iso)", "alpha(0)", "lam2", "g", "gamma"});
+    fitter.set_parameter_labels({"g (iso)", "lam2 (iso)", "alpha(0)", "lam2", "g", "gamma" , "c"});
     fitter.add_data( pipi_pwave );
     fitter.set_guess_range({0, 200});
 
@@ -65,40 +67,46 @@ void pwave()
     fitter.sync_parameter("lam2 (iso)", "lam2");
     
     fitter.fix_parameter("lam2", 1.5);
-    fitter.fix_parameter("alpha(0)", 0.557);
+    fitter.fix_parameter("alpha(0)", 0.5);
     fitter.set_parameter_posdef("g");
     fitter.set_parameter_posdef("gamma");
-
-    fitter.do_iterative_fit({165, 1.2}, 20, "rhofit");
+    fitter.set_parameter_posdef("c");
+    
+    fitter.do_iterative_fit({3.16, 1.2, 0.4}, 20);
 
     // ---------------------------------------------------------------------------
     // Make plot
 
     plotter plotter;
 
-    // Trajectory vs rho masses
-    plot p1 = plotter.new_plot();
-    p1.set_legend_spacing(0.03);
-    p1.set_legend(0.25, 0.8);
-    p1.set_curve_points(50);
-    p1.add_curve({0, 1}, [alpha](double s){ return alpha->real_part(s); },      "Real");
-    p1.add_curve({0, 1}, [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-
     // P-wave real part vs data
     entry_style dashed;
     dashed._color = jpacColor::DarkGrey;
     dashed._style = kDashed;
+    dashed._add_to_legend = true;
+
+    plot p1 = plotter.new_plot();
+    p1.set_labels("#it{s}  [GeV^{2}]", "#it{#alpha}^{#it{#rho}}_{#it{s}}");
+    p1.set_ranges({-1, 4}, {-0.5, 5});
+    p1.set_legend(0.25, 0.7);
+    p1.add_curve(  {-1,4},      [alpha](double s){ return alpha->real_part(s);} , "Real");
+    p1.add_curve(  {-1,4},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+
+    dashed._label = "0.5 + 0.9 #it{s}";
+    p1.add_curve(  {-1,4},      [](double s){ return 0.5 + 0.9*s; }, dashed);
+    p1.add_vertical((4*1.5 + STH)/2.);
+    p1.save("rho_alpha.pdf");
+
+    plot p2 = plotter.new_plot();
+    p2.set_labels("#it{s}  [GeV^{2}]", "#it{A}_{1}^{(1)}(#it{s})");
+    p2.set_ranges({0,1}, {-0.7, 1.3});
+    p2.set_legend(0.25, 0.7);
+    p2.color_offset(2);
+    p2.add_curve(  {0,1},      [rho](double s){ return std::real(rho->direct_projection(1, s));} , "Real");
+    p2.add_curve(  {0,1},      [rho](double s){ return std::imag(rho->direct_projection(1, s)); }, "Imaginary");
+    dashed._label = "GKPY";
+    p2.add_curve( {STH + EPS, 1}, [](double s){ return std::real(pipi::partial_wave(1, 1, s));}, dashed);
     dashed._add_to_legend = false;
-
-    plot p3 = plotter.new_plot();
-    p3.set_labels("#it{s}  [GeV^{2}]", "Re _{1}(s)");
-    p3.add_curve(  {0,1},      [rho](double s){ return      std::real(rho->direct_projection(1, s)); });
-    p3.add_curve( {STH + EPS, 1}, [](double s){ return 16*PI*std::real(pipi::partial_wave(1, 1, s));}, dashed);
-
-    plot p4 = plotter.new_plot();
-    p4.color_offset(1);
-    p4.set_labels("#it{s}  [GeV^{2}]", "Im f_{1}(s)");
-    p4.add_curve(  {0,1},      [rho](double s){ return       std::imag(rho->direct_projection(1, s)); });
-    p4.add_curve( {STH + EPS, 1}, [](double s){ return 16*PI*std::imag(pipi::partial_wave(1, 1, s));}, dashed);
-    plotter.combine({3,1}, {p1, p3, p4}, "pwave.pdf");
+    p2.add_curve( {STH + EPS, 1}, [](double s){ return std::imag(pipi::partial_wave(1, 1, s));}, dashed);
+    p2.save("rho_PW.pdf");
 };

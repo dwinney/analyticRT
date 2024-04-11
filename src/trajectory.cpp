@@ -25,10 +25,7 @@ namespace analyticRT
     std::vector<std::string> raw_trajectory::parameter_labels()
     {
         std::vector<std::string> labels;
-        for (int i = 0; i < _Npars; i++)
-        {
-            labels.push_back("par[" + std::to_string(i) + "]");
-        }
+        for (int i = 0; i < _Npars; i++)  labels.push_back("par[" + std::to_string(i) + "]");
         return labels;
     };
 
@@ -37,30 +34,19 @@ namespace analyticRT
 
     complex raw_trajectory::evaluate(double s)
     {
-        return _alphaSUB + DR_RHC(s) - DR_RHC(_sSUB);
+        double pole = ( is_zero(_gA) ) ? 0. : _gA / (s - _sA) * (s - _sSUB) / (_sA - _sSUB);
+        return _alphaSUB + pole + DR_RHC(s) - DR_RHC(_sSUB);
     };
 
     // Output the imaginary part on the real line
-    double raw_trajectory::imaginary_part(double s)
-    {
-        return std::imag(evaluate(s));
-    };
-
-    double raw_trajectory::real_part(double s)
-    {
-        return std::real(evaluate(s));
-    };
+    double raw_trajectory::imaginary_part(double s){  return std::imag(evaluate(s)); };
+    double raw_trajectory::real_part(double s){ return std::real(evaluate(s)); };
 
     double raw_trajectory::width(double s)
     {
         if (s <= _sRHC) return 0.;
-
-        auto f = [&](double x)
-        {
-            return real_part(x); 
-        };
+        auto f = [&](double x){ return real_part(x); };
         double alphaPrime = boost::math::differentiation::finite_difference_derivative(f, s);
-
         return imaginary_part(s) / alphaPrime / sqrt(s);
     };
     

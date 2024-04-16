@@ -19,7 +19,7 @@ namespace analyticRT
         public:
 
         unitary(double R, int jmin, std::string id)
-        : raw_iterable(R, 5, id), _jmin(jmin)
+        : raw_iterable(R, 6, id), _jmin(jmin)
         {};
 
         protected:
@@ -27,14 +27,15 @@ namespace analyticRT
         // Parameters are the scale and beta coefficients
         inline void allocate_parameters(std::vector<double> pars)
         {
-            set_subtraction(0., pars[0]); // alpha(0)
+            set_subtraction(STH, pars[0]); // alpha(0)
             _Lam2  = pars[1];             // Lambda^2 scale
-            _g     = pars[2];             // Residue 
-            _gamma = pars[3];             // High-energy constant
-            _c     = pars[4];
+            add_pole(M2_PION/2., pars[2]); // Adler Zero Residue
+            _g     = pars[3];             // Residue 
+            _gamma = pars[4];             // High-energy constant
+            _c     = pars[5];
         };
 
-        inline std::vector<std::string> parameter_labels(){ return {"alpha(0)", "Lambda^2", "g", "gamma", "c"}; };
+        inline std::vector<std::string> parameter_labels(){ return {"alpha(0)", "Lambda^2", "gA", "g", "gamma", "c"}; };
 
         // RHC given by the logarithmic form 
         inline double RHC(double s)

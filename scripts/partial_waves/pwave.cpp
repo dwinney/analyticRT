@@ -58,7 +58,7 @@ void pwave()
     data_set pipi_pwave = pipi::partial_wave(1, 1, 10, {0.1, 1.0});
 
     fitter<pipi_fit> fitter(rho, alpha);
-    fitter.set_parameter_labels({"g (iso)", "lam2 (iso)", "alpha(0)", "lam2", "g", "gamma" , "c"});
+    fitter.set_parameter_labels({"g (iso)", "lam2 (iso)", "alpha(0)", "lam2", "gA", "g", "gamma", "c"});
     fitter.add_data( pipi_pwave );
     fitter.set_guess_range({0, 200});
 
@@ -68,11 +68,12 @@ void pwave()
     
     fitter.fix_parameter("lam2", 1.5);
     fitter.fix_parameter("alpha(0)", 0.5);
+    fitter.fix_parameter("gA", 0.);
     fitter.set_parameter_posdef("g");
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("c");
     
-    fitter.do_iterative_fit({3.16, 1.2, 0.4}, 20);
+    fitter.do_iterative_fit({3.16, 1.2, 5.}, 20);
 
     // ---------------------------------------------------------------------------
     // Make plot

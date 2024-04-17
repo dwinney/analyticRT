@@ -93,6 +93,9 @@ namespace analyticRT
         // Set the subtraction location for the dispersion relation
         inline void set_subtraction(double s_sub, double val){ _sSUB = s_sub; _alphaSUB = val; };
 
+        // If only one input is given this only changes the subtraction value but not the point
+        inline void set_subtraction(double val){ _alphaSUB = val; };
+
         // Whether to allow the trajectory to have a pole on the real axis (i.e. a zero of the amplitude)
         inline void add_pole(double sA, double gA){ _sA = sA; _gA = gA; };
 

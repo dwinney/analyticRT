@@ -7,8 +7,8 @@
 // Email:        daniel.winney@gmail.com
 // ---------------------------------------------------------------------------
 
-#ifndef K_MATRIX_HPP
-#define K_MATRIX_HPP
+#ifndef POLYNOMIAL_HPP
+#define POLYNOMIAL_HPP
 
 #include "trajectory.hpp"
 #include "iterable.hpp"
@@ -16,11 +16,11 @@
 
 namespace analyticRT
 {
-    class k_matrix : public raw_iterable
+    class polynomial : public raw_iterable
     {
         public: 
 
-        k_matrix(double RHC, std::string id)
+        polynomial(double RHC, std::string id)
         : raw_iterable(RHC, 4, id)
         {};
 

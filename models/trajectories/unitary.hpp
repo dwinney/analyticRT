@@ -27,7 +27,7 @@ namespace analyticRT
         // Parameters are the scale and beta coefficients
         inline void allocate_parameters(std::vector<double> pars)
         {
-            set_subtraction(STH, pars[0]); // alpha(0)
+            set_subtraction(pars[0]); // alpha(0)
             _Lam2  = pars[1];             // Lambda^2 scale
             add_pole(M2_PION/2., pars[2]); // Adler Zero Residue
             _g     = pars[3];             // Residue 

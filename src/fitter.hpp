@@ -287,10 +287,12 @@ namespace analyticRT
                 if (par._fixed) continue;
                 if (par._synced){ synced_pars.push_back(par._i); continue; } // Flag any synced parameters, we'll come back to them
 
-                if (par._custom_limits) guess.push_back(_guesser->Uniform(par._lower, par._upper)); 
-                else if (par._positive) guess.push_back(_guesser->Uniform(0., _guess_range[1]));
-                else                    guess.push_back(_guesser->Uniform(_guess_range[0], _guess_range[1]));
-                par._value = guess.back();
+                double val;
+                if (par._custom_limits) val = _guesser->Uniform(par._lower, par._upper); 
+                else if (par._positive) val = _guesser->Uniform(0., _guess_range[1]);
+                else                    val = _guesser->Uniform(_guess_range[0], _guess_range[1]);
+                par._value = val;
+                guess.push_back(val);
             };  
 
             // After all randomized parameters have been set, rego through the synced ones
@@ -327,9 +329,12 @@ namespace analyticRT
                     if (par._fixed) continue;
                     if (par._synced){ synced_pars.push_back(par._i); continue; } // Flag any synced parameters, we'll come back to them
 
-                    if (par._custom_limits) guess.push_back(_guesser->Uniform(par._lower, par._upper)); 
-                    else                    guess.push_back(_guesser->Uniform(_guess_range[0], _guess_range[1]));
-                    par._value = guess.back();
+                    double val;
+                    if (par._custom_limits) val = _guesser->Uniform(par._lower, par._upper); 
+                    else if (par._positive) val = _guesser->Uniform(0., _guess_range[1]);
+                    else                    val = _guesser->Uniform(_guess_range[0], _guess_range[1]);
+                    par._value = val;
+                    guess.push_back(val);
                 };
 
                 // After all randomized parameters have been set, rego through the synced ones

@@ -45,6 +45,26 @@ namespace analyticRT
         std::string _draw_opt = "L";                // string which enters ROOT::Draw() 
     };
 
+    inline entry_style dashed(jpacColor color, std::string id = "")
+    {
+        entry_style dashed;
+        dashed._color = color;
+        dashed._style = kDashed;
+        dashed._label = id;
+        dashed._add_to_legend = (dashed._label != "");
+        return dashed;
+    };
+
+    inline entry_style solid(jpacColor color, std::string id = "")
+    {
+        entry_style dashed;
+        dashed._color = color;
+        dashed._style = kSolid;
+        dashed._label = id;
+        dashed._add_to_legend = (dashed._label != "");
+        return dashed;
+    };
+
     enum curve_type { 
                       sigma_s,      sigma_w,      sigma_Egam,       // Integrated cross-sections as functions of s, W, and Egam
                       dsigmadt_s,   dsigmadt_w,   dsigmadt_Egam,    // Differential x-sections as function of t at fixed s, W, Egam

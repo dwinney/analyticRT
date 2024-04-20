@@ -49,8 +49,7 @@ void pwave()
     // For the I = 1 we can assume for now that there is a single trajectory
 
     // Given by the dispersive form
-    trajectory alpha = new_trajectory<unitary>(4.*M2_PION, 1, "#rho");
-    iterable(alpha)->set_interp_pars(200, {50., 200.});
+    trajectory alpha = new_trajectory<unitary>(1, "#rho");
 
     // The trajectory defines an isobar
     isobar rho = new_isobar<truncated>(1, 5, alpha, "I = 1");
@@ -58,22 +57,20 @@ void pwave()
     data_set pipi_pwave = pipi::partial_wave(1, 1, 10, {0.1, 1.0});
 
     fitter<pipi_fit> fitter(rho, alpha);
-    fitter.set_parameter_labels({"g (iso)", "lam2 (iso)", "alpha(0)", "lam2", "gA", "g", "gamma", "c"});
+    fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "lam2", "alpha(0)", "g", "gamma", "c"});
     fitter.add_data( pipi_pwave );
-    fitter.set_guess_range({0, 200});
 
     // Sync isobar's parameters to the trajectory as required by unitarity
-    fitter.sync_parameter("g (iso)", "g");
+    fitter.sync_parameter("g (iso)",    "g");
     fitter.sync_parameter("lam2 (iso)", "lam2");
     
-    fitter.fix_parameter("lam2", 1.5);
+    fitter.fix_parameter("lam2",     1.5);
     fitter.fix_parameter("alpha(0)", 0.5);
-    fitter.fix_parameter("gA", 0.);
     fitter.set_parameter_posdef("g");
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("c");
     
-    fitter.do_iterative_fit({3.16, 1.2, 5.}, 20);
+    fitter.do_iterative_fit({3.16, 1.2, 5.}, 1);
 
     // ---------------------------------------------------------------------------
     // Make plot

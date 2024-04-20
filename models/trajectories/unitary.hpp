@@ -18,8 +18,8 @@ namespace analyticRT
     {
         public:
 
-        unitary(double R, int jmin, std::string id)
-        : raw_iterable(R, 6, id), _jmin(jmin)
+        unitary(int jmin, std::string id)
+        : raw_iterable(4*M2_PION, 5, id), _jmin(jmin)
         {};
 
         protected:
@@ -27,22 +27,21 @@ namespace analyticRT
         // Parameters are the scale and beta coefficients
         inline void allocate_parameters(std::vector<double> pars)
         {
-            set_subtraction(pars[0]); // alpha(0)
-            _Lam2  = pars[1];             // Lambda^2 scale
-            add_pole(M2_PION/2., pars[2]); // Adler Zero Residue
-            _g     = pars[3];             // Residue 
-            _gamma = pars[4];             // High-energy constant
-            _c     = pars[5];
+            _lam2  = pars[0];              // Lambda^2 scale
+            set_subtraction(pars[1]);      // alpha(0)
+            _g     = pars[2];              // Residue 
+            _gamma = pars[3];              // High-energy constant
+            _c     = pars[4];
         };
 
-        inline std::vector<std::string> parameter_labels(){ return {"alpha(0)", "Lambda^2", "gA", "g", "gamma", "c"}; };
+        inline std::vector<std::string> parameter_labels(){ return {"Lambda^2", "alpha(0)", "g", "gamma", "c"}; };
 
         // RHC given by the logarithmic form 
         inline double RHC(double s)
         {
             if (s < _sRHC) return 0.;
 
-            double q2hat = (s - _sRHC) / 4. / _Lam2;
+            double q2hat = (s - _sRHC) / 4. / _lam2;
             double beta  = _g / (2.*_jmin + 1.);
             double rho   = sqrt(1. - _sRHC / s);
             double gamma = _gamma / PI;
@@ -57,7 +56,7 @@ namespace analyticRT
 
         // Members related to the model for the imaginary part along the RHC
         int    _jmin  = 1;               // Lowest physical partial wave 
-        double _Lam2  = 3.;              // Scale of elastic unitarity
+        double _lam2  = 3.;              // Scale of elastic unitarity
 
         // Free parameters
         double _g     = 1.; // Pole residue

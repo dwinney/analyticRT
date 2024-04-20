@@ -34,8 +34,7 @@ namespace analyticRT
 
     complex raw_trajectory::evaluate(double s)
     {
-        double pole = ( is_zero(_gA) ) ? 0. : _gA / (s - _sA) * (s - _sSUB) / (_sA - _sSUB);
-        return _alphaSUB + pole + DR_RHC(s) - DR_RHC(_sSUB);
+        return _alphaSUB + DR_RHC(s) - DR_RHC(_sSUB);
     };
 
     // Output the imaginary part on the real line

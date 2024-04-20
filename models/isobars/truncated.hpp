@@ -28,13 +28,17 @@ namespace analyticRT
         // Evaluate the full term with angular dependence
         complex evaluate(double s, double zs)
         {
-            complex as = _alpha->evaluate(s);
-            double q2hat = q2(s) / _lambda2;
+            complex as   = _alpha->evaluate(s);
+            double q2hat = q2(s) / _lam2;
 
             complex sum = 0;
             for (int n = 0; n <= _nmax; n++) 
             { 
-                if (((n + isospin()) % 2) == 0) sum += pow(q2hat*zs, n) / (n - as);
+                if ((n + isospin()) % 2 == 0)
+                {
+                    if (n == 0 && _adler) sum += 1./(adler_pole(s) - as);
+                    else sum += pow(q2hat*zs, n) / (n - as);
+                };
             };
             return _g * sum;
         };
@@ -42,28 +46,27 @@ namespace analyticRT
         // Allocate free parameters
         void allocate_parameters(std::vector<double> pars)
         {
-            _g       = pars[0];
-            _lambda2 = pars[1];
-
-            if (_option == kFixAlpha) return;
-            
-            // Rest of the parameters get fed into alpha
-            std::vector<double> alpha_pars(pars.begin() + 2, pars.end());  
-            _alpha->set_parameters(alpha_pars);
+            _lam2 = pars[0];
+            _g    = pars[1];
+            if (_adler) _gA = pars[2];
         };
 
-        // Option whether or not to fit alpha parameters
-        const static int kFixAlpha   = 0; // Default
-        const static int kFloatAlpha = 1;
+        trajectory get_trajectory(){ return _alpha; };
+
+        static const int kAddAdlerZero    = 0;
+        static const int kRemoveAdlerZero = 1;
         void set_option(int x)
         {
-            _option = x;
             switch (x)
             {
-                case kFixAlpha:   { set_Npars(2);                   return; }
-                case kFloatAlpha: { set_Npars(2 + _alpha->Npars()); return; }
-                default: option_error();
-            };
+                case kAddAdlerZero:    { _adler = true; set_Npars(3); return; };
+                case kRemoveAdlerZero: 
+                {
+                    if (!_adler) return; 
+                    _adler = false; set_Npars(2); return;
+                };
+            }
+            return;
         };
 
         protected:
@@ -71,34 +74,18 @@ namespace analyticRT
         // Each isobar is given by a single trajectory only
         trajectory _alpha = nullptr;
 
-        int _nmax       = 1;  // Max spin to include in sum
-        double _g       = 1.; // Coupling
-        double _lambda2 = 1.; // Scale Lambda^2
-    };
+        int _nmax       = 1;   // Max spin to include in sum
+        double _g       = 1.;  // Coupling
+        double _lam2    = 1.;  // Scale Lambda^2 indside \hat{q}_s^2
 
-    // Same thing as above but with the l = 0 pole removed
-    class no_swave : public truncated
-    {
-        public: 
-        
-        no_swave(key x, unsigned int isospin, int nmax, trajectory alpha, std::string id)
-        : truncated(x, isospin, nmax, alpha, id)
-        {};
-
-        // Evaluate the full term with angular dependence
-        complex evaluate(double s, double zs)
-        {
-            complex as = _alpha->evaluate(s);
-            double q2hat = q2(s) / _lambda2;
-
-            complex sum = 0;
-            for (int n = 1; n <= _nmax; n++) 
-            { 
-                if (((n + isospin()) % 2) == 0) sum += pow(q2hat*zs, n) / (n - as);
-            };
-            return _g * sum;
+        // Related to Adler Zero
+        inline double adler_pole(double s)
+        { 
+            double sth = _alpha->sth();
+            return _gA / (s - _sA) * (s - sth) / (_sA - sth);
         };
-
+        bool _adler = false;
+        double _gA = 1., _sA = M2_PION/2.;
     };
 };
 

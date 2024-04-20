@@ -14,6 +14,7 @@
 #include "constants.hpp"
 #include "kinematics.hpp"
 #include "legendre_P.hpp"
+#include "trajectory.hpp"
 #include <boost/math/quadrature/gauss.hpp>
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 
@@ -107,6 +108,9 @@ namespace analyticRT
         // These can be overridden if the projections can easily be done analytically
         virtual complex direct_projection(unsigned int j, double s);
         virtual complex cross_projection( unsigned int j, double s);
+
+        // Access the saves trajectory pointer
+        virtual trajectory get_trajectory(){ return nullptr; };
 
         // For fitting print a list of labels to differentiate each free parameter
         // By default just print {p[0], p[1], p[2], ...}

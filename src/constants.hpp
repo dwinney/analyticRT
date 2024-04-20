@@ -14,6 +14,7 @@
 #include <cmath>
 #include <complex>
 #include <limits>
+#include <boost/math/tools/minima.hpp>
 
 #include "print.hpp"
 #include "debug.hpp"
@@ -249,6 +250,15 @@ namespace analyticRT
     inline bool is_zero(double a, double tol)
     {
         return (std::abs(a) < tol);
+    };
+
+    // ---------------------------------------------------------------------------
+    // Find the minimum of a simple one variable function in a range
+    
+    inline double find_minimum(std::function<double(double)> F, std::array<double,2> range)
+    {
+        std::pair<double, double> r = boost::math::tools::brent_find_minima(F, range[0], range[1], std::numeric_limits<double>::digits);
+        return r.first;
     };
 };
 // ---------------------------------------------------------------------------

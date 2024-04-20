@@ -67,6 +67,7 @@ namespace analyticRT
         {};
 
         // Public getters and setters
+        inline double sth(){ return _sRHC; };
         inline std::string id(){ return _id; };
         inline void set_id(std::string id){ _id = id; };
 
@@ -95,9 +96,6 @@ namespace analyticRT
 
         // If only one input is given this only changes the subtraction value but not the point
         inline void set_subtraction(double val){ _alphaSUB = val; };
-
-        // Whether to allow the trajectory to have a pole on the real axis (i.e. a zero of the amplitude)
-        inline void add_pole(double sA, double gA){ _sA = sA; _gA = gA; };
 
         // Output the trajectory from evaluating dispersion relation
         virtual complex evaluate(double s);
@@ -132,10 +130,7 @@ namespace analyticRT
 
         // Once-subtracted DR parameters
         double _sSUB = 0., _alphaSUB = 0.;
-
-        // If we allow an adler zero
-        double _sA = 0., _gA = 0.;
-
+        
         // -------------------------------------------------------------------
         private:
 

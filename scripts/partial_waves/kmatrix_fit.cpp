@@ -46,7 +46,7 @@ void kmatrix_fit()
     // --------------------------------------------------------------------------
     // For the I = 1 we can assume for now that there is a single trajectory
 
-    isobar   A00        = new_isobar<k_matrix>(1, "K-matrix");
+    isobar   A00        = new_isobar<k_matrix>(0, "K-matrix");
     data_set pipi_pwave = pipi::partial_wave(0, 0, 10, {0.1, 0.8});
 
     fitter<pipi_fit> fitter(A00, nullptr); // fitter takes an iosbar but not a trajectory

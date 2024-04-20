@@ -19,26 +19,18 @@ namespace analyticRT
     {
         public:
 
-        raw_iterable(double R_th, std::string id)
-        : raw_trajectory(R_th, id)
+        raw_iterable(double R_th, std::function<double(double)> F, std::string id)
+        : raw_trajectory(R_th, id), _initial_guess(F)
         { initialize(); };
 
-        raw_iterable(double R_th, int N, std::string id)
-        : raw_trajectory(R_th, N, id)
+        raw_iterable(double R_th, int N, std::function<double(double)> F, std::string id)
+        : raw_trajectory(R_th, N, id), _initial_guess(F)
         { initialize(); };
 
         // This is the primary new function, which is to calculate the next iteration
         // We want to control exactly when we iterate in case we need to change parameters
         // in between iterations
         void iterate();
-
-        // Here is the initial guess of the real part
-        inline void set_initial_pars(std::array<double,2> alpha, double mu2 = 20) 
-        {
-            _azInitial = alpha[0]; _apInitial = alpha[1]; _mu2 = mu2;
-            this->initialize();
-        };
-        inline double initial_guess(double s){ return (_azInitial + _apInitial * s) / sqrt(1. + s / _mu2); };
 
         // Adjust the matching points and parameters involved in the interpolation
         inline void set_interp_pars(int N, std::array<double,2> pars)
@@ -53,6 +45,8 @@ namespace analyticRT
         // ---------------------------------------------------------------------------
     
         protected: 
+        
+        std::function<double(double)> _initial_guess;
 
         // Default parameters for the initial guess        
         double _azInitial = 0.5, _apInitial = 0.9, _mu2 = 20;

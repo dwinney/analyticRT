@@ -705,8 +705,8 @@ namespace analyticRT
             if (_isobar != nullptr)
             {
                 line(); centered(4, "Isobar parameters"); divider(4);            
-                cout << left << setw(10) << "id"     << setw(16) << "PARAMETER"  << setw(18) << "FIT VALUE"    << setw(18) << "ERROR"        << endl;
-                cout << left << setw(10) << "-----" << setw(16) << "----------" << setw(18) << "------------" << setw(18) << "------------" << endl;
+                cout << left << setw(10) << "id"     << setw(17) << "PARAMETER"  << setw(20) << "FIT VALUE"    << setw(20) << "ERROR"        << endl;
+                cout << left << setw(10) << "-----"  << setw(17) << "----------" << setw(20) << "------------" << setw(20) << "------------" << endl;
             };
             for (int k = 0; k < _Niso; k++)
             {

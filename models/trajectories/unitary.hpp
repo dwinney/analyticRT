@@ -18,8 +18,8 @@ namespace analyticRT
     {
         public:
 
-        unitary(int jmin, std::string id)
-        : raw_iterable(4*M2_PION, 5, id), _jmin(jmin)
+        unitary(int jmin, std::function<double(double)> F, std::string id)
+        : raw_iterable(4*M2_PION, 5, F, id), _jmin(jmin)
         {};
 
         protected:

@@ -20,7 +20,7 @@ namespace analyticRT
         for (int i = 0; i < _Ninterp; i++)
         {
             double si  = _sRHC + (_s1 - _sRHC) * double(i) / double(_Ninterp-1); 
-            double rei = initial_guess(si);
+            double rei = _initial_guess(si);
             s.push_back(si); realpha.push_back(rei);
         };
 
@@ -29,12 +29,12 @@ namespace analyticRT
         for (int i = 0; i < _Ninterp; i++)
         {
             double si  = s2 + (_sAsym - s2) * double(i) / double(_Ninterp-1); 
-            double rei = initial_guess(si);
+            double rei = _initial_guess(si);
             s.push_back(si); realpha.push_back(rei);
         };
 
         // Load everything to the correct interpolators     
-        _ReAlphaAsym = initial_guess(_sAsym);
+        _ReAlphaAsym = _initial_guess(_sAsym);
         _ReAlphaInterp.SetData(s, realpha);
     };
 

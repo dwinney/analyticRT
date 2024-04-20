@@ -45,16 +45,21 @@ void pwave()
 {
     using namespace analyticRT;
 
+    int iso = 1, J = 1;
+
     // --------------------------------------------------------------------------
     // For the I = 1 we can assume for now that there is a single trajectory
 
-    // Given by the dispersive form
-    trajectory alpha = new_trajectory<unitary>(1, "#rho");
+    // Need to specify our initial guess of the Re alpha(s)
+    auto initial_rho = [](double s){ return (0.5 + 0.9*s) / sqrt(1 + s/20); };
+
+    // This defines the dispersive form
+    trajectory alpha = new_trajectory<unitary>(J, initial_rho, "#rho");
 
     // The trajectory defines an isobar
-    isobar rho = new_isobar<truncated>(1, 5, alpha, "I = 1");
+    isobar rho = new_isobar<truncated>(iso, 5, alpha, "I = 1");
 
-    data_set pipi_pwave = pipi::partial_wave(1, 1, 10, {0.1, 1.0});
+    data_set pipi_pwave = pipi::partial_wave(iso, J, 10, {0.1, 1.0});
 
     fitter<pipi_fit> fitter(rho, alpha);
     fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "lam2", "alpha(0)", "g", "gamma", "c"});
@@ -70,7 +75,7 @@ void pwave()
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("c");
     
-    fitter.do_iterative_fit({3.16, 1.2, 5.}, 1);
+    fitter.do_iterative_fit({3.16, 1.2, 5.}, 5);
 
     // ---------------------------------------------------------------------------
     // Make plot

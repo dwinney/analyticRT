@@ -18,6 +18,31 @@
 
 using namespace analyticRT;
 
+struct pipi_fit
+{
+    static std::string data_type(int i){ return "GKPY PW"; };
+
+    // Sum difference of squares for both real and imaginary part
+    static double fcn(const std::vector<data_set> &data_sets, isobar iso, trajectory traj)
+    { 
+        double dos = 0; // difference of squares 
+        for (auto &data : data_sets)
+        {
+            for (int i = 0; i < data._N; i++)
+            {
+                double s     = data._x[i];
+                std::complex<double> ex(data._y[i], data._z[i]); 
+                std::complex<double> th = iso->direct_projection(0, s);
+
+                dos += std::norm( std::imag(th) - std::imag(ex) );
+                dos += std::norm( std::real(th) - std::real(ex) );
+            };
+        };
+        return dos; 
+    };
+};
+
+
 void swave()
 {
     using namespace analyticRT;
@@ -25,73 +50,63 @@ void swave()
 
     // Global constants
     int iso = 0, J = 0;
-
-    // --------------------------------------------------------------------------
-    // We will compare to the inverse of the K-matrix amplitude
-
-    isobar kmatrix = new_isobar<k_matrix>(iso, "K-matrix");
-
-    // Fit parameters
-    double a, b, c; 
-    a = -0.33855517;
-    b =  35.481475;
-    c =  1.2369145;
-    kmatrix->set_parameters({a, b, c});
     
     // --------------------------------------------------------------------------
+    // Compare with the "trajectory" from the K-matrix
+
+    isobar kmatrix = new_isobar<k_matrix>(0, "K-matrix");
+    kmatrix->set_parameters({0.33855466, -4.2438229, 1.2369133});
+
+    // -------------------------------- ------------------------------------------
     // Set up the unitary dispersive trajectory
 
-    trajectory alpha = new_trajectory<unitary>(STH, iso, "Dispersive");
-    iterable(alpha)->set_initial_pars({-8, 0.2}, 1);
+    auto initial_sigma = [](double s){ return (-0.7 + 1.0*s) / sqrt(1 + s/10); };
+
+    trajectory alpha = new_trajectory<unitary>(iso, initial_sigma, "Dispersive");
     alpha->set_subtraction(STH, 0); // Move subtraction to threshold instead of 0
 
     // The trajectory defines an isobar
     isobar sigma = new_isobar<truncated>(iso, 4, alpha, "#it{I} = 0");
+    sigma->set_option(truncated::kAddAdlerZero);
 
-    double lam2 = 1.5, g_A, gamma, g_sig, c_sig, alpha0;
+    data_set pipi_pwave = pipi::partial_wave(iso, J, 10, {0.1, 0.7});
 
-    g_sig  =  0.2;
-    g_A    = -0.08;
-    gamma  = 4.;
-    c_sig  = 0.00001;
-    alpha0 = -4.8*g_sig;
+    fitter<pipi_fit> fitter(sigma, alpha);
+    fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "g_A", "lam2", "alpha(sth)", "g", "gamma", "c"});
+    fitter.add_data( pipi_pwave );
 
-    sigma->set_parameters({g_sig, lam2});
-    alpha->set_parameters({alpha0, lam2, g_A, g_sig, gamma, c_sig});
+    // Sync isobar's parameters to the trajectory as required by unitarity
+    fitter.sync_parameter("g (iso)",    "g");
+    fitter.sync_parameter("lam2 (iso)", "lam2");
+    
+    fitter.fix_parameter("lam2", 4.);
+    fitter.fix_parameter("g",    1.0);
+    fitter.set_parameter_posdef("gamma");
+    
+    fitter.do_fit({0.36526, -4.4484817, 3.3043884, 109.54624});
 
     // ---------------------------------------------------------------------------
     // Make plot
 
     plotter plotter;
 
-    // P-wave real part vs data
-    entry_style dashed;
-    dashed._color = jpacColor::DarkGrey;
-    dashed._style = kDashed;
-    dashed._add_to_legend = true;
-    dashed._label = "K-matrix";
-
     plot p1 = plotter.new_plot();
-    p1.set_labels("#it{s}  [GeV^{2}]", "#alpha^{#sigma}_{#it{s}} / #it{g}_{#sigma}");
+    p1.set_labels("#it{s}  [GeV^{2}]", "#tilde{#alpha}^{#sigma}_{#it{s}} / #it{g}_{#sigma}");
     p1.set_legend(0.70, 0.2);
-    p1.set_ranges({0, 1}, {-5, 2});
-    p1.add_curve(  {STH + EPS, 1},  [alpha, g_sig](double s){ return alpha->real_part(s) / g_sig;},      "Real");
-    p1.add_curve(  {STH + EPS, 1},  [alpha, g_sig](double s){ return alpha->imaginary_part(s)/ g_sig;}, "Imaginary");
-    p1.add_curve(  {STH + EPS, 1},  [kmatrix, J](double s){ return std::real(-1/kmatrix->direct_projection(J, s));}, dashed);
-    dashed._add_to_legend = false;
-    p1.add_curve(  {STH + EPS, 1},  [kmatrix, J](double s){ return std::imag(-1/kmatrix->direct_projection(J, s));}, dashed);
-    p1.add_vertical(STH);
+    p1.set_ranges({0, 3}, {-5, 4});
+    p1.add_curve(  {STH + EPS, 3},  [sigma](double s){   return std::real(-1/sigma->direct_projection(0, s));},      "Real");
+    p1.add_curve(  {STH + EPS, 3},  [sigma](double s){   return std::imag(-1/sigma->direct_projection(0, s));}, "Imaginary");
+    p1.add_curve(  {STH + EPS, 3},  [kmatrix](double s){ return std::real(-1/kmatrix->direct_projection(0, s));}, dashed(jpacColor::DarkGrey, "K-matrix"));
+    p1.add_curve(  {STH + EPS, 3},  [kmatrix](double s){ return std::imag(-1/kmatrix->direct_projection(0, s));}, dashed(jpacColor::DarkGrey));
 
     plot p2 = plotter.new_plot();
     p2.set_labels("#it{s}  [GeV^{2}]", "#it{A}^{(0)}_{0}(s)");
-    p2.set_legend(0.60, 0.2);
-    p2.add_curve(  {STH, 0.8},  [sigma](double s){ return std::real(sigma->direct_projection(0, s)); }, "Real");
-    p2.add_curve(  {STH, 0.8},  [sigma](double s){ return std::imag(sigma->direct_projection(0, s)); }, "Imaginary");
-    dashed._add_to_legend = true;
-    dashed._label = "GKPY";
-    p2.add_curve( {STH + EPS, 0.8}, [](double s){ return std::real(pipi::partial_wave(0, 0, s));}, dashed);
-    dashed._add_to_legend = false;
-    p2.add_curve( {STH + EPS, 0.8}, [](double s){ return std::imag(pipi::partial_wave(0, 0, s));}, dashed);
+    p2.set_legend(0.450, 0.2);
+    p2.set_ranges({STH, 0.9}, {-0.5, 1.5});
+    p2.add_curve( {STH + EPS, 0.9},  [sigma](double s){ return std::real(sigma->direct_projection(0, s)); }, "Real");
+    p2.add_curve( {STH + EPS, 0.9},  [sigma](double s){ return std::imag(sigma->direct_projection(0, s)); }, "Imaginary");
+    p2.add_curve( {STH + EPS, 0.9}, [](double s){ return std::real(pipi::partial_wave(0, 0, s));}, dashed(jpacColor::DarkGrey, "GKPY"));
+    p2.add_curve( {STH + EPS, 0.9}, [](double s){ return std::imag(pipi::partial_wave(0, 0, s));}, dashed(jpacColor::DarkGrey));
 
-    plotter.combine({2,1}, {p1, p2}, "a00.pdf");
+    plotter.combine({2,1}, {p2, p1}, "a00.pdf");
 };

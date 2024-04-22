@@ -84,12 +84,13 @@ void kmatrix_fit()
 
     plot p3 = plotter.new_plot();
     p3.set_labels("#it{s}  [GeV^{2}]", "#alpha^{#sigma}_{#it{s}} / #it{g}_{#sigma}");
-    p3.set_ranges({0, 1.2}, {-0.5, 1.5});
+    p3.set_ranges({0, 1.2}, {-0.75, 1.5});
     p3.set_legend(0.25, 0.75);
     p3.add_header("#it{K}-matrix");
 
     p3.add_curve(  {EPS, 1.2}, [alpha](double s){ return alpha->real_part(s);},      "Real");
     p3.add_curve(  {EPS, 1.2}, [alpha](double s){ return alpha->imaginary_part(s);}, "Imaginary");
+    p3.add_curve(  {EPS, 1.2}, [](double s){ return (-0.7 + s) /sqrt(1+s/20); }, dashed(jpacColor::DarkGrey));
     p3.add_horizontal(0, {kBlack, kSolid});
     p3.save("alpha_kmatrix.pdf");
 };

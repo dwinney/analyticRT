@@ -36,7 +36,7 @@ namespace analyticRT
             { 
                 if ((n + isospin()) % 2 == 0)
                 {
-                    if (n == 0 && _adler) sum += 1./(adler_pole(s) - as);
+                    if (n == 0 && _adler) sum += 1./( adler_pole(s) - as);
                     else sum += pow(q2hat*zs, n) / (n - as);
                 };
             };
@@ -48,7 +48,7 @@ namespace analyticRT
         {
             _lam2 = pars[0];
             _g    = pars[1];
-            if (_adler) _gA = pars[2];
+            if (_adler) { _gA = pars[2]; _m = pars[3]; }
         };
 
         trajectory get_trajectory(){ return _alpha; };
@@ -59,7 +59,7 @@ namespace analyticRT
         {
             switch (x)
             {
-                case kAddAdlerZero:    { _adler = true; set_Npars(3); return; };
+                case kAddAdlerZero:    { _adler = true; set_Npars(4); return; };
                 case kRemoveAdlerZero: 
                 {
                     if (!_adler) return; 
@@ -79,13 +79,9 @@ namespace analyticRT
         double _lam2    = 1.;  // Scale Lambda^2 indside \hat{q}_s^2
 
         // Related to Adler Zero
-        inline double adler_pole(double s)
-        { 
-            double sth = _alpha->sth();
-            return _gA / (s - _sA) * (s - sth) / (_sA - sth);
-        };
+        inline double adler_pole(double s){ return _gA/(s - _sA)*(s / _sA) -  _gA/(_m*_m - _sA)*(_m*_m / _sA); };
         bool _adler = false;
-        double _gA = 1., _sA = M2_PION/2.;
+        double _gA = 1., _sA = M2_PION/2., _m = 0;
     };
 };
 

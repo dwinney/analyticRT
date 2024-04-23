@@ -67,7 +67,7 @@ void swave()
     trajectory alpha = new_trajectory<unitary>(iso, initial_sigma, "Dispersive");
 
     // The trajectory defines an isobar
-    isobar sigma = new_isobar<truncated>(iso, 4, alpha, "#it{I} = 0");
+    isobar sigma = new_isobar<truncated>(iso, 4, alpha, "truncated, n = 4");
     sigma->set_option(truncated::kAddAdlerZero);
 
     // "data" to fit against
@@ -95,24 +95,26 @@ void swave()
     plotter plotter;
 
     plot p1 = plotter.new_plot();
-    p1.set_labels("#it{s}  [GeV^{2}]", "#it{A}^{(0)}_{0}(s)");
-    p1.set_legend(0.25, 0.2);
-    p1.set_ranges({STH, 0.9}, {-0.3, 1.3});
-    p1.add_curve( {STH + EPS, 0.9},  [sigma](double s){ return std::real(sigma->direct_projection(0, s)); }, "Real");
-    p1.add_curve( {STH + EPS, 0.9},  [sigma](double s){ return std::imag(sigma->direct_projection(0, s)); }, "Imaginary");
-    p1.add_curve( {STH + EPS, 0.9}, [](double s){ return std::real(pipi::partial_wave(0, 0, s));}, dashed(jpacColor::DarkGrey, "GKPY"));
-    p1.add_curve( {STH + EPS, 0.9}, [](double s){ return std::imag(pipi::partial_wave(0, 0, s));}, dashed(jpacColor::DarkGrey));
-    p1.add_curve( {STH + EPS, 0.9}, [kmatrix](double s){ return std::real(kmatrix->direct_projection(0, s));}, dashed(jpacColor::Green, "K-matrix"));
-    p1.add_curve( {STH + EPS, 0.9}, [kmatrix](double s){ return std::imag(kmatrix->direct_projection(0, s));}, dashed(jpacColor::Green));
+    p1.set_labels("#it{s}  [GeV^{2}]", "#it{A}^{(0)}_{0}(#it{s})");
+    p1.color_offset(2);
+    p1.set_legend(0.25, 0.7);
+    p1.set_ranges({0, 0.9}, {-0.3, 1.3});
+    p1.add_curve( {0, 0.9},  [sigma](double s){return std::real(sigma->direct_projection(0, s)); }, "Real");
+    p1.add_curve( {0, 2},  [sigma](double s){return std::imag(sigma->direct_projection(0, s)); }, "Imaginary");
+    p1.add_curve( {STH + EPS, 0.9}, [](double s){  return std::real(pipi::partial_wave(0, 0, s));},      dashed(jpacColor::DarkGrey, "GKPY"));
+    p1.add_curve( {STH + EPS, 0.9}, [](double s){  return std::imag(pipi::partial_wave(0, 0, s));},      dashed(jpacColor::DarkGrey));
+    p1.add_curve( {EPS, 0.9}, [kmatrix](double s){ return std::real(kmatrix->direct_projection(0, s));}, dashed(jpacColor::Purple,    "#it{K}-matrix"));
+    p1.add_curve( {EPS, 0.9}, [kmatrix](double s){ return std::imag(kmatrix->direct_projection(0, s));}, dashed(jpacColor::Purple));
 
     plot p2 = plotter.new_plot();
-    p2.set_labels("#it{s}  [GeV^{2}]", "#alpha^{#sigma}_{#it{s}}");
+    p2.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
     p2.set_legend(0.70, 0.2);
-    p2.set_ranges({0, 1}, {-0.75, 1.5});
-    p2.add_curve( {0, 1},  [alpha](double s){ return alpha->real_part(s); }, "Real");
-    p2.add_curve( {0, 1},  [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    p2.add_curve( {EPS, 1}, [alpha_K](double s){ return alpha_K->real_part(s);}, dashed(jpacColor::Green, "K-matrix"));
-    p2.add_curve( {EPS, 1}, [alpha_K](double s){ return alpha_K->imaginary_part(s);}, dashed(jpacColor::Green));
+    p2.set_ranges({0, 2}, {-0.75, 1.5});
+    p2.add_curve( {0, 2},  [alpha](double s){ return alpha->real_part(s); }, "Real");
+    p2.add_curve( {0, 2},  [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    p2.add_curve( {EPS, 2}, initial_sigma, dashed(jpacColor::DarkGrey, "Initial guess"));
+    p2.add_curve( {EPS, 2}, [alpha_K](double s){ return alpha_K->real_part(s);},      dashed(jpacColor::Purple, "#it{K}-matrix"));
+    p2.add_curve( {EPS, 2}, [alpha_K](double s){ return alpha_K->imaginary_part(s);}, dashed(jpacColor::Purple));
 
-    plotter.combine({2,1}, {p1, p2}, "a00_dispersive.pdf");
+    plotter.combine({2,1}, {p1, p2}, "a00.pdf");
 };

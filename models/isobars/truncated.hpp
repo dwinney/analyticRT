@@ -40,7 +40,7 @@ namespace analyticRT
                     else sum += pow(q2hat*zs, n) / (n - as);
                 };
             };
-            return _g * sum;
+            return (_constant) ? _g*sum - _gC : _g*sum;
         };
 
         // Allocate free parameters
@@ -48,23 +48,34 @@ namespace analyticRT
         {
             _lam2 = pars[0];
             _g    = pars[1];
-            if (_adler) { _gA = pars[2]; _m = pars[3]; }
+            
+            int index = 2;
+            if (_adler) {   _gA = pars[index]; _m = pars[index+1]; index += 2; }
+            if (_constant){ _gC = pars[index]; }
         };
 
         trajectory get_trajectory(){ return _alpha; };
 
         static const int kAddAdlerZero    = 0;
         static const int kRemoveAdlerZero = 1;
+        static const int kAddConstant     = 2;
+        static const int kRemoveConstant  = 3;
         void set_option(int x)
         {
             switch (x)
             {
-                case kAddAdlerZero:    { _adler = true; set_Npars(4); return; };
+                case kAddAdlerZero:    { _adler = true; set_Npars(4+_gC); return; };
                 case kRemoveAdlerZero: 
                 {
                     if (!_adler) return; 
-                    _adler = false; set_Npars(2); return;
+                    _adler = false; set_Npars(2+_gC); return;
                 };
+                case kAddConstant:    {_constant = true; set_Npars(2+2*_adler+1); return; };
+                case kRemoveConstant: 
+                { 
+                    if (!_constant) return; 
+                    _constant = false; set_Npars(2+2*_adler); return;
+                }
             }
             return;
         };
@@ -82,6 +93,10 @@ namespace analyticRT
         inline double adler_pole(double s){ return _gA/(s - _sA)*(s / _sA) -  _gA/(_m*_m - _sA)*(_m*_m / _sA); };
         bool _adler = false;
         double _gA = 1., _sA = M2_PION/2., _m = 0;
+
+        // If to add a constant term in addition to the pole
+        bool _constant = false;
+        double _gC = 1.;
     };
 };
 

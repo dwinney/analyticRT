@@ -32,6 +32,18 @@ namespace analyticRT
         // in between iterations
         void iterate();
 
+        // Iterate multiple times changing the parameters in between each iteration
+        template<int N>
+        inline void iterate(std::array<std::vector<double>,N> vpars, int n = N)
+        {
+            this->initialize();
+            for (int i = 0; i < n; i++)
+            {
+                set_parameters(vpars[i]);
+                if (i != n-1) iterate();
+            };
+        };
+
         // Adjust the matching points and parameters involved in the interpolation
         inline void set_interp_pars(int N, std::array<double,2> pars)
         {
@@ -40,7 +52,8 @@ namespace analyticRT
         };
         
         // Evaluate the last saved iteration of the real part
-        inline double previousRePart(double s){ return (s < _sAsym) ? _ReAlphaInterp.Eval(s) : _ReAlphaAsym * sqrt(s / _sAsym); };
+        inline double previous_real(double s){ return (s < _sAsym) ? _ReAlphaInterp.Eval(s) : _ReAlphaAsym * sqrt(s / _sAsym); };
+        inline double previous_imag(double s){ return (s < _sAsym) ? _ImAlphaInterp.Eval(s) : _ImAlphaAsym * sqrt(s / _sAsym)* log(s)/log(_sAsym); };
         
         // ---------------------------------------------------------------------------
     
@@ -54,13 +67,14 @@ namespace analyticRT
         // Save an interpolation of the real part evaluated from DR
         int _Ninterp = 100; // Total interpolation will have 2*_Ninterp points
         ROOT::Math::Interpolator _ReAlphaInterp = ROOT::Math::Interpolator(2*_Ninterp, ROOT::Math::Interpolation::kCSPLINE);
+        ROOT::Math::Interpolator _ImAlphaInterp = ROOT::Math::Interpolator(2*_Ninterp, ROOT::Math::Interpolation::kCSPLINE);
 
         // Or at asymptotic arguments we match to a simple square-root
-        double _s1 = 50,_sAsym = 200, _ReAlphaAsym;
+        double _s1 = 50,_sAsym = 200, _ReAlphaAsym, _ImAlphaAsym;
 
         // Function to run all tasks needed to evaluate the first iteration
         // i.e. populate the interpolations with the inital_guess
-        void initialize();
+        virtual void initialize();
     };
 
     inline std::shared_ptr<raw_iterable> iterable(trajectory alpha)

@@ -799,19 +799,32 @@ namespace analyticRT
 
             // Also print a file tabulating the parameters of the trajectory
             // This allows us to calculate the "path dependent" iteration
-            std::string results = filename + "_pars.txt";
-            freopen(results.c_str(),"w", stdout);
+            std::string traj_results = filename + "_traj_pars.txt";
+            freopen(traj_results.c_str(),"w", stdout);
             
-            for (int i = _Niso; i < _pars.size(); i++) 
-            {
-                if (_pars[i]._i == _Niso) cout << setw(20) << "#" + _pars[i]._label;
-                else                  cout << setw(20) << _pars[i]._label;
-            };
-            cout << endl;
-
             for (int n = 0; n < fcns.size(); n++)
             {
                 for (int i = _Niso; i < _pars.size(); i++) 
+                {
+                    if (_pars[i]._fixed) { cout << setw(20) << _pars[i]._value; continue; }
+                    if (_pars[i]._synced)
+                    { 
+                        if (!_pars[_pars[i]._sync_to]._fixed) cout << setw(20) << _pars[_pars[i]._sync_to]._itval[n];
+                        else                                  cout << setw(20) << _pars[_pars[i]._sync_to]._value;
+                        continue;
+                    };
+                    cout << setw(20) << _pars[i]._itval[n];
+                };
+                cout << endl;
+            };
+            fclose(stdout);
+
+            std::string iso_results = filename + "_iso_pars.txt";
+            freopen(iso_results.c_str(),"w", stdout);
+            
+            for (int n = 0; n < fcns.size(); n++)
+            {
+                for (int i = 0; i < _Niso; i++) 
                 {
                     if (_pars[i]._fixed) { cout << setw(20) << _pars[i]._value; continue; }
                     if (_pars[i]._synced)

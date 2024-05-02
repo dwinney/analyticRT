@@ -86,9 +86,9 @@ void pwave()
     p1.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
     p1.set_ranges({0,2}, {-0.5, 3});
     p1.set_legend(0.25, 0.7);
-    p1.add_curve(  {0,2},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
-    p1.add_curve(  {0,2},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    p1.add_curve(  {0,2},      initial_rho, dashed(jpacColor::DarkGrey,               "Initial guess"));
+    p1.add_curve(  {0, 2},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
+    p1.add_curve(  {0, 2},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    p1.add_curve(  {0, 2},      initial_rho, dashed(jpacColor::DarkGrey,               "Initial guess"));
 
     plot p2 = plotter.new_plot();
     p2.set_labels("#it{s}  [GeV^{2}]", "#it{A}_{1}^{(1)}(#it{s})");

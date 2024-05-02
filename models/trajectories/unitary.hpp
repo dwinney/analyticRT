@@ -22,8 +22,43 @@ namespace analyticRT
         : raw_iterable(4*M2_PION, 5, F, id), _jmin(jmin)
         {};
 
-        protected:
+        // RHC given by the logarithmic form 
+        inline double RHC(double s)
+        {
+            if (s < _sRHC) return 0.;
+
+            double  q2hat        = (s - _sRHC) / 4. / _lam2;
+            double  rho          = sqrt(1. - _sRHC / s);
+            double  gamma        = _gamma / PI;
+            // double  delta_alpha  = previous_real(s) -     previous_real(_sRHC);
+            double  delta_alpha  = _initial_guess(s) - _initial_guess(_sRHC);
+
+            complex alphas       = previous_real(s) + I * previous_imag(s);
+
+            double beta  = _g / (2.*_jmin + 1.);
+            if (_pomeron) beta *= std::norm(1. + _gP/_g*alphas);
+
+            if (s > 100)
+            {
+                if (delta_alpha < 0) { fatal("unitary::RHC","delta_alpha is negative!"); };
+                return gamma*((1 + _jmin + delta_alpha)*log(q2hat) + log(_c*rho*beta/gamma));
+            }; 
+            return gamma*log(1. + rho/gamma*pow(q2hat, _jmin)*beta*(1. + _c*pow(q2hat, 1 + delta_alpha)));              
+        };
         
+        static const int kDefault    = 0;
+        static const int kAddPomeron = 1;
+        inline void set_option(int opt)
+        {
+            switch (opt)
+            {
+                case (kAddPomeron) : { _pomeron = true; set_Npars(6); return;}; 
+                default: return;
+            }
+        };
+
+        private:
+
         // Parameters are the scale and beta coefficients
         inline void allocate_parameters(std::vector<double> pars)
         {
@@ -32,27 +67,8 @@ namespace analyticRT
             _g     = pars[2];              // Residue 
             _gamma = pars[3];              // High-energy constant
             _c     = pars[4];
+            if (_pomeron) _gP  = pars[5];
         };
-
-        inline std::vector<std::string> parameter_labels(){ return {"Lambda^2", "alpha(0)", "g", "gamma", "c"}; };
-
-        // RHC given by the logarithmic form 
-        inline double RHC(double s)
-        {
-            if (s < _sRHC) return 0.;
-
-            double q2hat = (s - _sRHC) / 4. / _lam2;
-            double beta  = _g / (2.*_jmin + 1.);
-            double rho   = sqrt(1. - _sRHC / s);
-            double gamma = _gamma / PI;
-            double delRe = previousRePart(s) - previousRePart(_sRHC);
-
-            // For numerical stability, at asymptotic argumenets, simplify the equation
-            if (s > 100) return gamma*((1 + _jmin + delRe)*log(q2hat) + log(_c*rho*beta/gamma));
-            return gamma*log(1. + rho*beta/gamma*pow(q2hat, _jmin)*(1. + _c*pow(q2hat, 1 + delRe)));              
-        };
-
-        protected:
 
         // Members related to the model for the imaginary part along the RHC
         int    _jmin  = 1;               // Lowest physical partial wave 
@@ -62,6 +78,10 @@ namespace analyticRT
         double _g     = 1.; // Pole residue
         double _gamma = 1.; // Slope parameter
         double  _c    = 1.; // Inelastic parameter
+
+        // Parameters related to including the constant contribution from a Pomeron
+        bool _pomeron = false;
+        double _gP = 0;
     };
 };
 

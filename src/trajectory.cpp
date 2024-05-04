@@ -49,6 +49,29 @@ namespace analyticRT
         return imaginary_part(s) / alphaPrime / sqrt(s);
     };
     
+    data_set raw_trajectory::evaluate(int n, std::array<double,2> range)
+    {
+        data_set output;
+
+        std::stringstream ss;
+        ss << std::setprecision(3) << "_[" << range[0] << "," << range[1] << "]";
+        output._id   = id() + ss.str();
+
+        output._N    = n;
+        output._type = 1;
+        for (int i = 0; i < n; i++)
+        {
+            double  si = range[0] + double(i)*(range[1] - range[0]) / double(n-1);
+            std::complex<double> ai = evaluate(si);
+
+            output._x.push_back(si);
+            output._y.push_back(std::real(ai));
+            output._z.push_back(std::imag(ai));
+        };
+
+        return output;
+    };
+
     // -----------------------------------------------------------------------
     // Internal functions for evaluation
 

@@ -53,10 +53,9 @@ namespace analyticRT
         std::vector<double> s, realpha, imalpha;
         
         // Near threshold, (s < s1) we use a lot of points
-        double s1 = 100;
         for (int i = 0; i < _Ninterp; i++)
         {
-            double si  = _sRHC + (s1 - _sRHC) * double(i) / double(_Ninterp-1); 
+            double si  = _sRHC + (_s1 - _sRHC) * double(i) / double(_Ninterp-1); 
             complex alphai = evaluate(si);
 
             s.push_back(si); 
@@ -65,7 +64,7 @@ namespace analyticRT
         };
 
         // Repeat for an other N points from s1 to the asymptotic matchpoint
-        double s2 = s1 + 1;
+        double s2 = _s1 + 1;
         for (int i = 0; i < _Ninterp; i++)
         {
             double si  = s2 + (_sAsym - s2) * double(i) / double(_Ninterp-1); 

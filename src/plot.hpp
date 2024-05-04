@@ -184,7 +184,7 @@ namespace analyticRT
             _vlines.push_back(new_vert);
         };
 
-        inline void add_horizontal(double y_val, std::array<int, 2> style = {kBlack, kDashed})
+        inline void add_horizontal(double y_val, std::array<int, 2> style = {kBlack, kSolid})
         {
             line new_horiz;
             new_horiz._value    = y_val;

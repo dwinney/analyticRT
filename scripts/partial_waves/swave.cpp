@@ -1,4 +1,4 @@
-// Comparison of the P-wave projection of hypergeometric isobar and pipi data
+// Comparison of the S-wave projection of hypergeometric isobar and pipi data
 //
 // Author:       Daniel Winney (2023)
 // Affiliation:  Joint Physics Analysis Center (JPAC)
@@ -6,7 +6,6 @@
 // ---------------------------------------------------------------------------
 
 #include "isobars/truncated.hpp"
-#include "isobars/k_matrix.hpp"
 #include "trajectories/unitary.hpp"
 
 #include "kinematics.hpp"
@@ -15,15 +14,17 @@
 #include "isobar.hpp"
 #include "plotter.hpp"
 #include "fitter.hpp"
+#include "data_set.hpp"
 
 using namespace analyticRT;
 
-struct pipi_fit
+struct swave_fit
 {
-    static std::string data_type(int i){ return "GKPY PW"; };
+    static std::string data_type(int i){ return (i == 0) ? "GKPY PW" : "Trajectory"; };
+
 
     // Sum difference of squares for both real and imaginary part
-    static double fcn(const std::vector<data_set> &data_sets, isobar iso, trajectory traj)
+    static double fcn(const std::vector<data_set> &data_sets, isobar f, trajectory alpha)
     { 
         double dos = 0; // difference of squares 
         for (auto &data : data_sets)
@@ -32,12 +33,16 @@ struct pipi_fit
             {
                 double s     = data._x[i];
                 std::complex<double> ex(data._y[i], data._z[i]); 
-                std::complex<double> th = iso->direct_projection(0, s);
+                std::complex<double> th = (data._type == 0) ? f->direct_projection(0, s) : alpha->evaluate(s);
 
-                dos += std::norm( std::imag(th) - std::imag(ex) );
-                dos += std::norm( std::real(th) - std::real(ex) );
+                dos += std::norm( th - ex );
             };
         };
+
+        // In addition to the data above, we add two "rubber band" points
+        dos += std::norm(iterable(alpha)->previous_evaluate(25)  - alpha->evaluate(25) );
+        dos += std::norm(iterable(alpha)->previous_evaluate(100) - alpha->evaluate(100));
+
         return dos; 
     };
 };
@@ -50,44 +55,54 @@ void swave()
 
     // Global constants
     int iso = 0, J = 0;
-    
-    // --------------------------------------------------------------------------
-    // Compare with the "trajectory" from the K-matrix
-
-    isobar kmatrix = new_isobar<k_matrix>(0, "K-matrix");
-    kmatrix->set_parameters({0.33855466, -4.2438229, 1.2369133});
-
-    trajectory alpha_K = kmatrix->get_trajectory();
 
     // -------------------------------- ------------------------------------------
     // Set up the unitary dispersive trajectory
 
-    auto initial_sigma = [](double s){ return (-0.7 + 1.0*s) / sqrt(1 + s/20); };
+    auto initial_sigma = [](double s){ return (-1. + 0.8*s) / sqrt(1 + s/20); };
 
     trajectory alpha = new_trajectory<unitary>(iso, initial_sigma, "Dispersive");
+    alpha->set_option(unitary::kAddConstant);
 
     // The trajectory defines an isobar
-    isobar sigma = new_isobar<truncated>(iso, 4, alpha, "truncated, n = 4");
-    sigma->set_option(truncated::kAddAdlerZero);
+    isobar sigma = new_isobar<truncated>(iso, 0, alpha, "truncated, n = 4");
+    sigma->set_option(truncated::kAddConstant);
+
+    // -------------------------------- ------------------------------------------
+    // GKPY partial waves
 
     // "data" to fit against
-    data_set pipi_pwave = pipi::partial_wave(iso, J, 10, {0.1, 0.7});
+    data_set pipi_swave = pipi::partial_wave(iso, J, 10, {0.1, 0.7});
 
-    fitter<pipi_fit> fitter(sigma, alpha);
-    fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "g_A", "m_sigma", "lam2", "alpha(0)", "g", "gamma", "c"});
-    fitter.add_data( pipi_pwave );
+    // -------------------------------- ------------------------------------------
+    // Instead of fitting to the partial waves we fit to the trajectory
+
+    // Iterate once to begin fitting
+    std::vector<double> zeroth_pars  = {1.5, -0.83683862, 0.89805832, 0.64101313,  21.942810,  0.93737249};
+    alpha->set_parameters(zeroth_pars);
+    alpha->iterate();
+  
+    // --------------------------------------------------------------------------
+    // If fitting doing a fit uncomment this
+
+    fitter<swave_fit> fitter(sigma, alpha);
+    fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "gp (iso)", "lam2", "alpha(0)", "g", "gamma", "c", "gp"});
+    fitter.add_data( pipi_swave );
 
     // Sync isobar's parameters to the trajectory as required by unitarity
     fitter.sync_parameter("g (iso)",    "g");
-    fitter.fix_parameter( "g",    1.0);
     fitter.sync_parameter("lam2 (iso)", "lam2");
-    fitter.fix_parameter( "lam2", 1.5);
-    fitter.fix_parameter("m_sigma", 0.820);
-    
-    // Fit the remaining parameters g_A, alpha(sth), gamma, and c
+    fitter.sync_parameter("gp (iso)",  "gp");
+
+    fitter.fix_parameter( "lam2",      1.5);
+
+    fitter.set_parameter_limits("alpha(0)", {-1, 1});
     fitter.set_parameter_posdef("gamma");
+    fitter.set_parameter_posdef("g");
+    fitter.set_parameter_posdef("gp");
     fitter.set_parameter_posdef("c");
-    fitter.do_fit({0.36539468, -0.33808994, 1.2604883, 127.01431});
+
+    fitter.do_iterative_fit({-0.75930719, 0.78648168, 1.06071710,  3.7111063,  0.89640185}, 5, "a00");
 
     // ---------------------------------------------------------------------------
     // Make plot
@@ -98,23 +113,20 @@ void swave()
     p1.set_labels("#it{s}  [GeV^{2}]", "#it{A}^{(0)}_{0}(#it{s})");
     p1.color_offset(2);
     p1.set_legend(0.25, 0.7);
-    p1.set_ranges({0, 0.9}, {-0.3, 1.3});
-    p1.add_curve( {0, 0.9},  [sigma](double s){return std::real(sigma->direct_projection(0, s)); }, "Real");
-    p1.add_curve( {0, 2},  [sigma](double s){return std::imag(sigma->direct_projection(0, s)); }, "Imaginary");
-    p1.add_curve( {STH + EPS, 0.9}, [](double s){  return std::real(pipi::partial_wave(0, 0, s));},      dashed(jpacColor::DarkGrey, "GKPY"));
-    p1.add_curve( {STH + EPS, 0.9}, [](double s){  return std::imag(pipi::partial_wave(0, 0, s));},      dashed(jpacColor::DarkGrey));
-    p1.add_curve( {EPS, 0.9}, [kmatrix](double s){ return std::real(kmatrix->direct_projection(0, s));}, dashed(jpacColor::Purple,    "#it{K}-matrix"));
-    p1.add_curve( {EPS, 0.9}, [kmatrix](double s){ return std::imag(kmatrix->direct_projection(0, s));}, dashed(jpacColor::Purple));
+    p1.set_ranges( {0, 0.9}, {-0.3, 1.3});
+    p1.add_curve(  {0, 0.9},  [sigma]( double s){ return std::real(sigma->direct_projection(0, s)); }, "Real");
+    p1.add_curve(  {0, 0.9},  [sigma]( double s){ return std::imag(sigma->direct_projection(0, s)); }, "Imaginary");
+    p1.add_dashed( {0, 0.9},  [sigma]( double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(sigma->direct_projection(0,s)) : 0; });
+    p1.add_curve( {STH + EPS, 0.9}, [](double s){ return std::real(pipi::partial_wave(0, 0, s));}, dashed(jpacColor::DarkGrey, "GKPY"));
+    p1.add_curve( {STH + EPS, 0.9}, [](double s){ return std::imag(pipi::partial_wave(0, 0, s));}, dashed(jpacColor::DarkGrey        ));
 
     plot p2 = plotter.new_plot();
     p2.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
     p2.set_legend(0.70, 0.2);
-    p2.set_ranges({0, 2}, {-0.75, 1.5});
-    p2.add_curve( {0, 2},  [alpha](double s){ return alpha->real_part(s); }, "Real");
-    p2.add_curve( {0, 2},  [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    p2.add_curve( {EPS, 2}, initial_sigma, dashed(jpacColor::DarkGrey, "Initial guess"));
-    p2.add_curve( {EPS, 2}, [alpha_K](double s){ return alpha_K->real_part(s);},      dashed(jpacColor::Purple, "#it{K}-matrix"));
-    p2.add_curve( {EPS, 2}, [alpha_K](double s){ return alpha_K->imaginary_part(s);}, dashed(jpacColor::Purple));
+    p2.add_curve( {-0.5, 250}, [alpha](double s){ return alpha->real_part(s); },              "Real");
+    p2.add_curve( {-0.5, 250}, [alpha](double s){ return alpha->imaginary_part(s); },         "Imaginary");
+    p2.add_curve( {STH, 250},  [alpha](double s){ return iterable(alpha)->previous_real(s); }, dashed(jpacColor::DarkGrey));
+    p2.add_curve( {STH, 250},  [alpha](double s){ return iterable(alpha)->previous_imag(s); }, dashed(jpacColor::DarkGrey));
 
-    plotter.combine({2,1}, {p1, p2}, "a00.pdf");
+    plotter.combine({2,1}, {p2, p1}, "a00.pdf");
 };

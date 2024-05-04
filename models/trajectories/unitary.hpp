@@ -30,29 +30,29 @@ namespace analyticRT
             double  q2hat        = (s - _sRHC) / 4. / _lam2;
             double  rho          = sqrt(1. - _sRHC / s);
             double  gamma        = _gamma / PI;
-            // double  delta_alpha  = previous_real(s) -     previous_real(_sRHC);
-            double  delta_alpha  = _initial_guess(s) - _initial_guess(_sRHC);
-
+            double  delta_alpha  = previous_real(s) /* -  previous_real(_sRHC) */;
             complex alphas       = previous_real(s) + I * previous_imag(s);
 
-            double beta  = _g / (2.*_jmin + 1.);
-            if (_pomeron) beta *= std::norm(1. + _gP/_g*alphas);
+            double beta   = _g / (2.*_jmin + 1.);
+            if (_constant) beta *= std::norm(1. + _gp/_g*alphas);
 
             if (s > 100)
             {
                 if (delta_alpha < 0) { fatal("unitary::RHC","delta_alpha is negative!"); };
                 return gamma*((1 + _jmin + delta_alpha)*log(q2hat) + log(_c*rho*beta/gamma));
             }; 
-            return gamma*log(1. + rho/gamma*pow(q2hat, _jmin)*beta*(1. + _c*pow(q2hat, 1 + delta_alpha)));              
+            return gamma*log(1. + rho/gamma*pow(q2hat, _jmin)*beta*(1. + _c*pow(q2hat, 1.+ delta_alpha)));              
         };
         
-        static const int kDefault    = 0;
-        static const int kAddPomeron = 1;
+        static const int kDefault        = 0;
+        static const int kAddConstant    = 1;
+        static const int kRemoveConstant = 2;
         inline void set_option(int opt)
         {
             switch (opt)
             {
-                case (kAddPomeron) : { _pomeron = true; set_Npars(6); return;}; 
+                case (kAddConstant)    : { _constant = true;  set_Npars(6); return;}; 
+                case (kRemoveConstant) : { _constant = false; set_Npars(5); return;}; 
                 default: return;
             }
         };
@@ -67,7 +67,7 @@ namespace analyticRT
             _g     = pars[2];              // Residue 
             _gamma = pars[3];              // High-energy constant
             _c     = pars[4];
-            if (_pomeron) _gP  = pars[5];
+            if (_constant) _gp  = pars[5];
         };
 
         // Members related to the model for the imaginary part along the RHC
@@ -79,9 +79,9 @@ namespace analyticRT
         double _gamma = 1.; // Slope parameter
         double  _c    = 1.; // Inelastic parameter
 
-        // Parameters related to including the constant contribution from a Pomeron
-        bool _pomeron = false;
-        double _gP = 0;
+        // Parameters related to including the constant contribution from a higher trajectory
+        bool _constant = false;
+        double _gp = 0;
     };
 };
 

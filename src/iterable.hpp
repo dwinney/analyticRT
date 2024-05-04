@@ -36,7 +36,6 @@ namespace analyticRT
         template<int N>
         inline void iterate(std::array<std::vector<double>,N> vpars, int n = N)
         {
-            this->initialize();
             for (int i = 0; i < n; i++)
             {
                 set_parameters(vpars[i]);
@@ -55,6 +54,9 @@ namespace analyticRT
         inline double previous_real(double s){ return (s < _sAsym) ? _ReAlphaInterp.Eval(s) : _ReAlphaAsym * sqrt(s / _sAsym); };
         inline double previous_imag(double s){ return (s < _sAsym) ? _ImAlphaInterp.Eval(s) : _ImAlphaAsym * sqrt(s / _sAsym)* log(s)/log(_sAsym); };
         
+        // 
+        inline complex previous_evaluate(double s){ return previous_real(s) + I*previous_imag(s); };
+
         // ---------------------------------------------------------------------------
     
         protected: 

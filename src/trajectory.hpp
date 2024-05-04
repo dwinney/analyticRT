@@ -10,6 +10,7 @@
 #define TRAJECTORY_HPP
 
 #include "constants.hpp"
+#include "data_set.hpp"
 
 #include <memory>
 #include <cmath>
@@ -99,6 +100,8 @@ namespace analyticRT
 
         // Output the trajectory from evaluating dispersion relation
         virtual complex evaluate(double s);
+
+        data_set evaluate(int n, std::array<double,2> range);
 
         // Output the real or imaginary parts along real line
         double real_part(double s);

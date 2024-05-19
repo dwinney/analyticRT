@@ -19,12 +19,12 @@ namespace analyticRT
     {
         public:
 
-        raw_iterable(double R_th, std::function<double(double)> F, std::string id)
-        : raw_trajectory(R_th, id), _initial_guess(F)
+        raw_iterable(double R_th, std::array<double,3> initpars, std::string id)
+        : raw_trajectory(R_th, id), _azInitial(initpars[0]), _apInitial(initpars[1]), _mu2(initpars[2])
         { initialize(); };
 
-        raw_iterable(double R_th, int N, std::function<double(double)> F, std::string id)
-        : raw_trajectory(R_th, N, id), _initial_guess(F)
+        raw_iterable(double R_th, int N, std::array<double,3> initpars, std::string id)
+        : raw_trajectory(R_th, N, id), _azInitial(initpars[0]), _apInitial(initpars[1]), _mu2(initpars[2])
         { initialize(); };
 
         // This is the primary new function, which is to calculate the next iteration
@@ -51,8 +51,8 @@ namespace analyticRT
         };
         
         // Evaluate the last saved iteration of the real part
-        inline double previous_real(double s){ return (s < _sAsym) ? _ReAlphaInterp.Eval(s) : _ReAlphaAsym * sqrt(s / _sAsym); };
-        inline double previous_imag(double s){ return (s < _sAsym) ? _ImAlphaInterp.Eval(s) : _ImAlphaAsym * sqrt(s / _sAsym)* log(s)/log(_sAsym); };
+        inline double previous_real(double s){ return (s <= _sAsym) ? _ReAlphaInterp.Eval(s) : _ReAlphaAsym * sqrt(s / _sAsym); };
+        inline double previous_imag(double s){ return (s <= _sAsym) ? _ImAlphaInterp.Eval(s) : _ImAlphaAsym * sqrt(s / _sAsym)* log(s)/log(_sAsym); };
         
         // 
         inline complex previous_evaluate(double s){ return previous_real(s) + I*previous_imag(s); };
@@ -61,10 +61,9 @@ namespace analyticRT
     
         protected: 
         
-        std::function<double(double)> _initial_guess;
-
         // Default parameters for the initial guess        
         double _azInitial = 0.5, _apInitial = 0.9, _mu2 = 20;
+        inline double initial_guess(double s){ return (_azInitial + _apInitial*s)/sqrt(1+ s/_mu2); };
 
         // Save an interpolation of the real part evaluated from DR
         int _Ninterp = 100; // Total interpolation will have 2*_Ninterp points

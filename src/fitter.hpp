@@ -855,7 +855,7 @@ namespace analyticRT
             double avg = 0;
             for (auto t : times){ avg += t; };
             avg /= times.size();
-            cout << std::setprecision(2);
+            cout << std::setprecision(5);
             cout << setw(30) << "Number of iterations: " << fcns.size()-1 << endl;
             cout << setw(30) << "Average time per iteration: " << avg << " s" << endl; line();
             cout << std::setprecision(8);

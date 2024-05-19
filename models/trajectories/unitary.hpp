@@ -18,7 +18,7 @@ namespace analyticRT
     {
         public:
 
-        unitary(int jmin, std::function<double(double)> F, std::string id)
+        unitary(int jmin, std::array<double,3> F, std::string id)
         : raw_iterable(4*M2_PION, 5, F, id), _jmin(jmin)
         {};
 
@@ -30,13 +30,15 @@ namespace analyticRT
             double  q2hat        = (s - _sRHC) / 4. / _lam2;
             double  rho          = sqrt(1. - _sRHC / s);
             double  gamma        = _gamma / PI;
-            double  delta_alpha  = previous_real(s) /* -  previous_real(_sRHC) */;
-            complex alphas       = previous_real(s) + I * previous_imag(s);
+            double  delta_alpha  = previous_real(s) - previous_real(_sRHC);
+
+            _sH = 4*_lam2 + _sRHC;
+            complex alphas       = (s <= _sH) ? (previous_real(s) + I * previous_imag(s)) : (previous_real(_sH) + I * previous_imag(_sH));
 
             double beta   = _g / (2.*_jmin + 1.);
-            if (_constant) beta *= std::norm(1. + _gp/_g*alphas);
+            if (_constant) beta *= std::pow(std::abs(1. + _gp/_g*alphas), 2.);
 
-            if (s > 100)
+            if (s > 300)
             {
                 if (delta_alpha < 0) { fatal("unitary::RHC","delta_alpha is negative!"); };
                 return gamma*((1 + _jmin + delta_alpha)*log(q2hat) + log(_c*rho*beta/gamma));
@@ -82,6 +84,7 @@ namespace analyticRT
         // Parameters related to including the constant contribution from a higher trajectory
         bool _constant = false;
         double _gp = 0;
+        double _sH = 50;
     };
 };
 

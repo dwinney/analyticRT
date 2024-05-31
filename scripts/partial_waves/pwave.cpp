@@ -50,11 +50,8 @@ void pwave()
     // --------------------------------------------------------------------------
     // For the I = 1 we can assume for now that there is a single trajectory
 
-    // Need to specify our initial guess of the Re alpha(s)
-    auto initial_rho = [](double s){ return (0.5 + 0.9*s) / sqrt(1 + s/20); };
-
     // This defines the dispersive form
-    trajectory alpha = new_trajectory<unitary>(J, initial_rho, "#rho");
+    trajectory alpha = new_trajectory<unitary>(J, std::array<double,3>({0.5, 0.9, 20}), "#rho");
 
     // The trajectory defines an isobar
     isobar rho = new_isobar<truncated>(iso, 5, alpha, "tunrcated, n = 5");
@@ -86,9 +83,9 @@ void pwave()
     p1.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
     p1.set_ranges({0,2}, {-0.5, 3});
     p1.set_legend(0.25, 0.7);
-    p1.add_curve(  {0, 2},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
-    p1.add_curve(  {0, 2},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    p1.add_curve(  {0, 2},      initial_rho, dashed(jpacColor::DarkGrey,               "Initial guess"));
+    p1.add_curve(  {-0.5, 2},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
+    p1.add_curve(  {-0.5, 2},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    p1.add_curve(  {-0.5, 2},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey, "0.5 + 0.9 #it{s}"));
 
     plot p2 = plotter.new_plot();
     p2.set_labels("#it{s}  [GeV^{2}]", "#it{A}_{1}^{(1)}(#it{s})");
@@ -97,8 +94,9 @@ void pwave()
     p2.color_offset(2);
     p2.add_curve(  {0,1},      [rho](double s){ return std::real(rho->direct_projection(1, s));} , "Real");
     p2.add_curve(  {0,1},      [rho](double s){ return std::imag(rho->direct_projection(1, s)); }, "Imaginary");
+    p2.add_curve( {0, 0.9},    [rho](double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(rho->direct_projection(1,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
     p2.add_curve( {STH + EPS, 1}, [](double s){ return std::real(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey, "GKPY"));
     p2.add_curve( {STH + EPS, 1}, [](double s){ return std::imag(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey));
 
-    plotter.combine({2,1}, {p2, p1}, "a11.pdf");
+    plotter.combine({2,1}, {p1, p2}, "a11.pdf");
 };

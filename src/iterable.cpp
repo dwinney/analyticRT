@@ -28,7 +28,7 @@ namespace analyticRT
 
         // Repeat for an other N points from s1 to the asymptotic matchpoint
         double s2 = _s1    + 1;
-        double s3 = _sAsym + 100;
+        double s3 = _sAsym;
         for (int i = 0; i < _Ninterp; i++)
         {
             double si  = s2 + (s3 - s2) * double(i) / double(_Ninterp-1); 
@@ -65,7 +65,7 @@ namespace analyticRT
 
         // Repeat for an other N points from s1 to the asymptotic matchpoint
         double s2 = _s1    + 1;
-        double s3 = _sAsym + 100;
+        double s3 = _sAsym;
         for (int i = 0; i < _Ninterp; i++)
         {
             double si  = s2 + (s3 - s2) * double(i) / double(_Ninterp-1); 

@@ -30,23 +30,19 @@ namespace analyticRT
             double  q2hat        = (s - _sRHC) / 4. / _lam2;
             double  rho          = sqrt(1. - _sRHC / s);
             double  gamma        = _gamma / PI;
-            double  delta_alpha  = previous_real(s) - previous_real(_sRHC);
+            double  delta        = previous_real(s) - previous_real(_sRHC);
 
-            _sH = 4*_lam2 + _sRHC;
-            complex alphas       = (s <= _sH) ? (previous_real(s) + I * previous_imag(s)) : (previous_real(_sH) + I * previous_imag(_sH));
+            double sH = 4*_lam2 + _sRHC;
+            complex alpha = (s <= sH)  ? previous_evaluate(s) : previous_evaluate(sH); 
+            double beta  = _g / (2.*_jmin + 1.);
+            double f = (_constant) ? std::norm(1. + _gp/_g*alpha) : 1.;
 
-            double beta   = _g / (2.*_jmin + 1.);
-            if (_constant) beta *= std::pow(std::abs(1. + _gp/_g*alphas), 2.);
+            double exponent = 1 + delta;
 
-            if (s > 300)
-            {
-                if (delta_alpha < 0) { fatal("unitary::RHC","delta_alpha is negative!"); };
-                return gamma*((1 + _jmin + delta_alpha)*log(q2hat) + log(_c*rho*beta/gamma));
-            }; 
-            return gamma*log(1. + rho/gamma*pow(q2hat, _jmin)*beta*(1. + _c*pow(q2hat, 1.+ delta_alpha)));              
+            if (s >= 200 && exponent > 0 && !is_zero(_c)) return gamma*((_jmin + exponent)*log(q2hat) + log(_c*rho*beta/gamma));
+            return gamma*log(1. + rho/gamma*pow(q2hat, _jmin)*beta*(f + _c*pow(q2hat, exponent)));              
         };
         
-        static const int kDefault        = 0;
         static const int kAddConstant    = 1;
         static const int kRemoveConstant = 2;
         inline void set_option(int opt)
@@ -84,7 +80,6 @@ namespace analyticRT
         // Parameters related to including the constant contribution from a higher trajectory
         bool _constant = false;
         double _gp = 0;
-        double _sH = 50;
     };
 };
 

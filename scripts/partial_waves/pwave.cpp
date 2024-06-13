@@ -54,7 +54,7 @@ void pwave()
     trajectory alpha = new_trajectory<unitary>(J, std::array<double,3>({0.5, 0.9, 20}), "#rho");
 
     // The trajectory defines an isobar
-    isobar rho = new_isobar<truncated>(iso, 5, alpha, "tunrcated, n = 5");
+    isobar rho = new_isobar<truncated>(iso, 5, alpha, "truncated, n = 5");
 
     data_set pipi_pwave = pipi::partial_wave(iso, J, 10, {0.1, 1.0});
 

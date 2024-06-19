@@ -32,15 +32,11 @@ struct swave_fit
         {
             for (int i = 0; i < data._N; i++) dos += std::norm( f->direct_projection(0, data._x[i]) - complex(data._y[i], data._z[i]) );
         };
-
-        // In addition to the data above, we add "rubber band" points to help force convergence
-        std::vector<double> rubber_band_points = {};
-        for (auto s : rubber_band_points) dos += std::norm(iterable(alpha)->previous_real(s) - alpha->real_part(s));
         return dos; 
     };
 };
 
-void swave()
+void fit()
 {
     using namespace analyticRT;
     using complex = std::complex<double>;
@@ -51,9 +47,9 @@ void swave()
     // -------------------------------- ------------------------------------------
     // Set up the unitary dispersive trajectory
 
-    trajectory alpha = new_trajectory<unitary>(iso, std::array<double,3>({-0.3, 0., 20}), "sigma");
+    trajectory alpha = new_trajectory<unitary>(iso, std::array<double,3>({-0.3, -0.2, 1/20}), "sigma");
     alpha->set_option(unitary::kAddConstant);
-    iterable(alpha)->set_interp_pars(100, {50, 200});
+    iterable(alpha)->set_interp_pars(200, {50, 200});
 
     // The trajectory defines an isobar
     isobar f0 = new_isobar<truncated>(iso, 0, alpha, "I = 0 only");
@@ -63,15 +59,16 @@ void swave()
     // GKPY partial waves
 
     // "data" to fit against
-    data_set pipi_swave    = pipi::partial_wave(iso, J,  10, {STH, 0.6});
+    data_set pipi_swave    = pipi::partial_wave(iso, J,  10, {STH, 0.45});
 
     // -------------------------------- ------------------------------------------
     // Instead of fitting to the partial waves we fit to the trajectory
 
     // Iterate once to begin fitting
     std::vector<std::vector<double>> pars; 
-    pars.push_back({1.5, -0.27078295,  0.36103187,  0.81319394,  6.1895053,  1.2057758 });  // 0
-    // pars.push_back({1.5, -0.23573855,  0.61598285,  0.13400043,  0.,         2.5416553 });  // 1
+
+    // {-0.15, -0.2, 1/20}
+    pars.push_back({1.5, -0.167538494 ,  0.916527549,  0.0273027551,  0,  5.4430882   });  // 0 
 
     // --------------------------------------------------------------------------
     // If fitting doing a fit uncomment this
@@ -84,24 +81,29 @@ void swave()
     fitter.sync_parameter("g (iso)",    "g");
     fitter.sync_parameter("lam2 (iso)", "lam2");
     fitter.sync_parameter("gp (iso)",  "gp");
-
     fitter.fix_parameter("lam2",  1.5);
+    fitter.fix_parameter("c",       0);
 
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("g");
+    fitter.set_parameter_posdef("c");
     fitter.set_parameter_posdef("gp");
-    // fitter.set_parameter_posdef("c");
-
-    // fitter.do_fit({initpars[1], initpars[2], initpars[3], initpars[4], initpars[5]});
-
-    for (auto par : pars){ alpha->set_parameters(par); alpha->iterate(); };
-
-    fitter.fix_parameter("c",       0);
-    // fitter.fix_parameter("gp",      6);
 
     std::vector<double> initpars = pars.back();
-    fitter.do_fit({initpars[1], initpars[2], initpars[3],  initpars[5]});
+    // for (auto par : pars){ alpha->set_parameters(par); alpha->iterate(); };
     
+    // fitter.do_fit({initpars[1], initpars[2], initpars[3], initpars[5]});
+    // alpha->iterate();
+    // fitter.do_fit({initpars[1], initpars[2], initpars[3], initpars[4], initpars[5]});    
+
+    // alpha->iterate();
+    // fitter.do_fit({initpars[1], initpars[2], initpars[3],initpars[4], initpars[5]});
+
+    fitter.do_iterative_fit({initpars[1], initpars[2], initpars[3], initpars[5]}, 1, "a00");
+    
+
+    // --------------------------------------------------------------------------
+
     // // IF JUST PLOTTING
     // for (int i = 0; i < pars.size(); i++) 
     // { 
@@ -109,7 +111,6 @@ void swave()
     //     if (i == pars.size() - 1) f0->set_parameters({pars[i][0], pars[i][2], pars[i][5]});
     //     else alpha->iterate(); 
     // };
-    // alpha->iterate();
 
     // ---------------------------------------------------------------------------
     // Make plot
@@ -132,23 +133,25 @@ void swave()
     p2.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
     p2.set_legend(0.65, 0.2);
     // p2.print_to_terminal(true);
-    p2.add_curve( {0,  1}, [alpha](double s){ return alpha->real_part(s); },              "Real");
-    p2.add_curve( {0,  1}, [alpha](double s){ return alpha->imaginary_part(s); },         "Imaginary");
-    p2.add_curve( {STH+EPS,  1},  [alpha](double s){ return iterable(alpha)->previous_real(s); }, dashed(jpacColor::DarkGrey, "Previous iteration"));
-    p2.add_curve( {STH+EPS,  1},  [alpha](double s){ return iterable(alpha)->previous_imag(s); }, dashed(jpacColor::DarkGrey));
+    p2.add_curve( {-0.5,  2}, [alpha](double s){ return alpha->real_part(s); },              "Real");
+    p2.add_curve( {-0.5,  2}, [alpha](double s){ return alpha->imaginary_part(s); },         "Imaginary");
+    p2.add_curve( {STH+EPS,  2},  [alpha](double s){ return iterable(alpha)->previous_real(s); }, dashed(jpacColor::DarkGrey, "Previous iteration"));
+    p2.add_curve( {STH+EPS,  2},  [alpha](double s){ return iterable(alpha)->previous_imag(s); }, dashed(jpacColor::DarkGrey));
+
+    plotter.combine({2,1}, {p2,p1}, "a00_results.pdf");
 
     plot p3 = plotter.new_plot();
     p3.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
     p3.set_legend(0.65, 0.2);
     p3.set_logscale(true, false);
-    p3.add_curve( {-0.5, 1000}, [alpha](double s){ return alpha->real_part(s);      },  "Real");
-    p3.add_curve( {1,    1000}, [alpha](double s){ return alpha->imaginary_part(s); },  "Imaginary");
+    p3.add_curve( {1, 10000}, [alpha](double s){ return alpha->real_part(s);      },  "Real");
+    p3.add_curve( {1, 10000}, [alpha](double s){ return alpha->imaginary_part(s); },  "Imaginary");
 
     plot p4 = plotter.new_plot();
     p4.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
     p4.set_legend(0.65, 0.2);
-    p4.add_curve(  {170, 220}, [alpha](double s){ return alpha->real_part(s);      },   "Real");
-    p4.add_curve(  {170, 220}, [alpha](double s){ return alpha->imaginary_part(s); },   "Imaginary");
+    p4.add_curve(  {50, 500}, [alpha](double s){ return alpha->real_part(s);      },   "Real");
+    p4.add_curve(  {50, 500}, [alpha](double s){ return alpha->imaginary_part(s); },   "Imaginary");
 
     plotter.combine({2,2}, {p2, p1, p3, p4}, "a00_checks.pdf");
 };

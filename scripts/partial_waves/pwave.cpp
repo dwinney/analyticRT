@@ -51,7 +51,8 @@ void pwave()
     // For the I = 1 we can assume for now that there is a single trajectory
 
     // This defines the dispersive form
-    trajectory alpha = new_trajectory<unitary>(J, std::array<double,3>({0.5, 0.9, 20}), "#rho");
+    trajectory alpha = new_trajectory<unitary>(J, std::array<double,3>({0.5, 0.9, 1./20}), "#rho");
+    alpha->set_integrator_depth(20);
 
     // The trajectory defines an isobar
     isobar rho = new_isobar<truncated>(iso, 5, alpha, "truncated, n = 5");
@@ -72,7 +73,7 @@ void pwave()
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("c");
     
-    fitter.do_iterative_fit({3.16, 1.2, 5.}, 5);
+    fitter.do_iterative_fit({3.16, 1.2, 5.}, 10);
 
     // ---------------------------------------------------------------------------
     // Make plot
@@ -81,11 +82,11 @@ void pwave()
 
     plot p1 = plotter.new_plot();
     p1.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
-    p1.set_ranges({0,2}, {-0.5, 3});
+    p1.set_ranges({-0.5, 4}, {-0.5, 5});
     p1.set_legend(0.25, 0.7);
-    p1.add_curve(  {-0.5, 2},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
-    p1.add_curve(  {-0.5, 2},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    p1.add_curve(  {-0.5, 2},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey, "0.5 + 0.9 #it{s}"));
+    p1.add_curve(  {-0.5, 4},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
+    p1.add_curve(  {-0.5, 4},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    p1.add_curve(  {-0.5, 4},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey, "0.5 + 0.9 #it{s}"));
 
     plot p2 = plotter.new_plot();
     p2.set_labels("#it{s}  [GeV^{2}]", "#it{A}_{1}^{(1)}(#it{s})");

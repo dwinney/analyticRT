@@ -72,6 +72,9 @@ namespace analyticRT
         inline std::string id(){ return _id; };
         inline void set_id(std::string id){ _id = id; };
 
+        // Integrator depth
+        inline void set_integrator_depth(int x){ _depth = x; };
+
         // Use set_parameters to set free variables
         // this checks that the size is the expected size
         void set_parameters( std::vector<double> pars);
@@ -133,6 +136,9 @@ namespace analyticRT
 
         // Once-subtracted DR parameters
         double _sSUB = 0., _alphaSUB = 0.;
+
+        // Depth of bisections in adaptive integrator
+        int _depth = 10;
         
         // -------------------------------------------------------------------
         private:

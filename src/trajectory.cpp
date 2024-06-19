@@ -96,7 +96,7 @@ namespace analyticRT
         double high = std::numeric_limits<double>::infinity();
 
         complex logarithm, integral, result;
-        integral  = boost::math::quadrature::gauss_kronrod<double, 61>::integrate(fdx, low, high, 10, 1.E-9, NULL);
+        integral  = boost::math::quadrature::gauss_kronrod<double, 61>::integrate(fdx, low, high, _depth, 1.E-9, NULL);
         logarithm = are_equal(s, _sRHC, 1E-5) ? 0 : RHCs * log(1. - (s + IEPS) / low);
         result = (integral - logarithm) / M_PI;
     

@@ -20,11 +20,11 @@ namespace analyticRT
         public:
 
         raw_iterable(double R_th, std::array<double,3> initpars, std::string id)
-        : raw_trajectory(R_th, id), _azInitial(initpars[0]), _apInitial(initpars[1]), _mu2(initpars[2])
+        : raw_trajectory(R_th, id), _azInitial(initpars[0]), _apInitial(initpars[1]), _oneovermu2(initpars[2])
         { initialize(); };
 
         raw_iterable(double R_th, int N, std::array<double,3> initpars, std::string id)
-        : raw_trajectory(R_th, N, id), _azInitial(initpars[0]), _apInitial(initpars[1]), _mu2(initpars[2])
+        : raw_trajectory(R_th, N, id), _azInitial(initpars[0]), _apInitial(initpars[1]), _oneovermu2(initpars[2])
         { initialize(); };
 
         // This is the primary new function, which is to calculate the next iteration
@@ -62,8 +62,8 @@ namespace analyticRT
         protected: 
         
         // Default parameters for the initial guess        
-        double _azInitial = 0.5, _apInitial = 0.9, _mu2 = 20;
-        inline double initial_guess(double s){ return (_azInitial + _apInitial*s)/sqrt(1+ s/_mu2); };
+        double _azInitial = 0.5, _apInitial = 0.9, _oneovermu2 = 1/20;
+        inline double initial_guess(double s){ return (_azInitial + _apInitial*s)/sqrt(1+ s*_oneovermu2); };
 
         // Save an interpolation of the real part evaluated from DR
         int _Ninterp = 100; // Total interpolation will have 2*_Ninterp points

@@ -27,19 +27,21 @@ namespace analyticRT
         {
             if (s < _sRHC) return 0.;
 
-            double  q2hat        = (s - _sRHC) / 4. / _lam2;
-            double  rho          = sqrt(1. - _sRHC / s);
-            double  gamma        = _gamma / PI;
-            double  delta        = previous_real(s) - previous_real(_sRHC);
+            double  q2hat   = (s - _sRHC) / 4. / _lam2;
+            double  rho     = sqrt(1. - _sRHC / s);
+            double  beta    = _g / (2.*_jmin + 1.);
+            double  gamma   = _gamma / PI;
 
-            double sH = 4*_lam2 + _sRHC;
-            complex alpha = (s <= sH)  ? previous_evaluate(s) : previous_evaluate(sH); 
-            double beta  = _g / (2.*_jmin + 1.);
-            double f = (_constant) ? std::norm(1. + _gp/_g*alpha) : 1.;
+            double f = 1;
+            if (_constant)
+            {
+                double sH = (4*_lam2 + _sRHC)/2.;
+                f = (s <= sH) ? std::norm(1. + _gp/_g*previous_evaluate(s)) 
+                              : std::norm(1. + _gp/_g*previous_evaluate(sH))*(s/sH);
+            }
 
-            double exponent = 1 + delta;
-
-            if (s >= 200 && exponent > 0 && !is_zero(_c)) return gamma*((_jmin + exponent)*log(q2hat) + log(_c*rho*beta/gamma));
+            double exponent = 1 + previous_real(s) - previous_real(_sRHC);
+            if (s >= 200 && exponent > 0 && !is_zero(_c)) return gamma*((_jmin + exponent)*log(q2hat) + log(_c*beta/gamma));
             return gamma*log(1. + rho/gamma*pow(q2hat, _jmin)*beta*(f + _c*pow(q2hat, exponent)));              
         };
         

@@ -165,7 +165,8 @@ namespace analyticRT
         std::vector<double> x, fx;
         for (int n = 0; n < _Npoints; n++)
         {
-            double xs  = bounds[0] + double(n) * (bounds[1] - bounds[0]) / double(_Npoints-1);
+            double xs  = (!_xlog) ? bounds[0] + double(n) * (bounds[1] - bounds[0]) / double(_Npoints-1)
+                                  : exp(log(bounds[0]) + double(n) * (log(bounds[1]) - log(bounds[0])) / double(_Npoints-1));
             double fxs = F(xs);
 
             x.push_back(xs);
@@ -207,7 +208,8 @@ namespace analyticRT
         std::vector<double> x, fx;
         for (int n = 0; n < _Npoints; n++)
         {
-            double xs  = bounds[0] + double(n) * (bounds[1] - bounds[0]) / double(_Npoints-1);
+            double xs  = (!_xlog) ? bounds[0] + double(n) * (bounds[1] - bounds[0]) / double(_Npoints-1)
+                                  : exp(log(bounds[0]) + double(n) * (log(bounds[1]) - log(bounds[0])) / double(_Npoints-1));
             double fxs = F(xs);
 
             x.push_back(xs);

@@ -272,6 +272,10 @@ namespace analyticRT
 
             line();
             print_results();
+            _fcn_dof = _minuit->MinValue() / (_Ndata - _minuit->NFree());
+            _fcn     = _minuit->MinValue();
+            _fit_pars    = convert(_minuit->X());
+            _fit = true;
         };
 
         // Same as above (do single fit) but initialize random parameters

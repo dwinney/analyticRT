@@ -41,7 +41,7 @@ struct pipi_fit
     };
 };
 
-void pwave()
+void fit()
 {
     using namespace analyticRT;
 
@@ -50,13 +50,15 @@ void pwave()
     // --------------------------------------------------------------------------
     // For the I = 1 we can assume for now that there is a single trajectory
 
-    // This defines the dispersive form
-    trajectory alpha = new_trajectory<unitary>(J, std::array<double,3>({0.5, 0.9, 1./20}), "#rho");
-    alpha->set_integrator_depth(20);
+    auto guess = [](double s){ return (0.5 + 0.9*s)/sqrt(1. + s/20.); };
 
+    // This defines the dispersive form
+    trajectory alpha = new_trajectory<unitary>(J, guess, "#rho");
+    alpha->set_integrator_depth(10);
+    
     // The trajectory defines an isobar
     isobar rho = new_isobar<truncated>(iso, 5, alpha, "truncated, n = 5");
-
+    
     data_set pipi_pwave = pipi::partial_wave(iso, J, 10, {0.1, 1.0});
 
     fitter<pipi_fit> fitter(rho, alpha);
@@ -72,8 +74,8 @@ void pwave()
     fitter.set_parameter_posdef("g");
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("c");
-    
-    fitter.do_iterative_fit({3.16, 1.2, 5.}, 10);
+
+    fitter.do_iterative_fit({3.16, 1.2, 5.}, 3);
 
     // ---------------------------------------------------------------------------
     // Make plot

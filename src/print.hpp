@@ -77,7 +77,6 @@ namespace analyticRT
         {
             std::cout << std::left << std::setw(PRINT_SPACING) << vi << std::endl;
         };
-        std::cout << std::endl;
     };
 
     // ---------------------------------------------------------------------------

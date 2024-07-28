@@ -20,8 +20,8 @@ namespace analyticRT
     {
         public: 
 
-        polynomial(double RHC, std::string id)
-        : raw_iterable(RHC, 4, id)
+        polynomial(double sth, int jmin, std::function<double(double)> F, std::string id)
+        : raw_iterable(sth, 4, F, id)
         {};
 
         // RHC given by the log with generic polynomial residue 
@@ -29,51 +29,57 @@ namespace analyticRT
         {
             if (s < _sRHC) return 0.;
 
-            double q2hat = (s - _sRHC) / 4. / _Lam2;        // Momenta divided by Regge scale
-            double rho   = sqrt(1. - _sRHC / s) / (16.*PI); // Phase space
+            double  q2hat   = (s - _sRHC) / 4. / _lam2;
+            double  rho     = sqrt(1. - _sRHC / s);
+            double gamma    = _gamma/PI;
 
-            double beta = 0; // Sum over polynomial of q^2
-            for (int i = 0; i < _coeffs.size(); i++) beta += _coeffs[i] * pow(s - _sRHC, i);
+            double r = 0; // Sum over polynomial of q^2
+            for (int i = 0; i < _coeffs.size(); i++) r += _coeffs[i] * pow(q2hat, i*_jmin);
+            r += _coeff_last*pow(q2hat, previous_real(s));
 
-            // For numerical stability, at asymptotic argumenets, simplify the equation
-            if (s > 100)
+            if (s > 200)
             {
-                return (_gamma / PI) *  (previousRePart(s) * log(q2hat) + log(beta));
-            }
+                 return (previous_real(s) > 0) ? gamma*(previous_real(s)*log(q2hat) + log(rho/gamma*_coeff_last))
+                                               : gamma*(_jmin+_coeffs.size())*log(q2hat);
+            };
 
             // else use the Full expression
-            return (_gamma / PI) *  log(1. + (PI / _gamma) * rho * beta * pow(q2hat, previousRePart(s)) );
+            return gamma*log(1. + rho/gamma*r);
         };
 
         // Parameters are the scale, subtraction, slope parameter, and arbitrarily many beta coefficients
         inline void allocate_parameters(std::vector<double> pars)
         {
             // Overall coupling
-            _Lam2 = pars[0];
+            _lam2 = pars[0];
             set_subtraction(0., pars[1]);
             _gamma = pars[2]; 
 
             // Individual couplings
             _coeffs.clear();
-            for (int i = 3; i < Npars(); i++) _coeffs.push_back(pars[i]);
+            for (int i = 3; i < Npars()-1; i++) _coeffs.push_back(pars[i]);
+            _coeff_last = pars[Npars()-1];
         };
 
         inline std::vector<std::string> parameter_labels()
         {
             std::vector<std::string> labels = {"Lambda^2", "alpha(0)", "gamma"};
-            for (int i = 3; i < Npars(); i++) labels.push_back( "c[" + std::to_string(i-2) + "]");
+            for (int i = 3; i < Npars()-1; i++) labels.push_back( "c[" + std::to_string(i-2) + "]");
+            labels.push_back("c[alpha]");
             return labels;
         };
 
         // The option is how many terms to consider in the polynomial
-        inline void set_option(int n){ _coeffs.clear(); set_Npars(n + 3); };
+        inline void set_option(int n){ _coeffs.clear(); set_Npars(n + 4); };
 
         protected:
 
         // Members related to the model for the imaginary part along the RHC
 
-        double _Lam2  = 5.;          // Scale of elastic unitarity
+        int _jmin = 1;
+        double _lam2  = 5.;          // Scale of elastic unitarity
         double _gamma = 1.;          // Overall coupling
+        double _coeff_last = 1.;
         std::vector<double> _coeffs; // (Real) coefficients of abitrary beta function inside the logarithm
     };
 };

@@ -17,7 +17,7 @@
 namespace analyticRT
 {
 
-    inline plot isovector_spins(plotter & plotter)
+    inline plot isovector_spins(plotter & plotter, bool errors = false)
     {
         data_set rhos = rho_spectrum();
         data_set as   = a_spectrum();
@@ -25,15 +25,15 @@ namespace analyticRT
         plot re = plotter.new_plot();
 
         std::vector<double> r_s  = square_elementwise(rhos._x);
-        std::vector<double> r_ds/*  = 2.*multiply_elementwise(rhos._x, rhos._dx) */;
+        std::vector<double> r_ds = (errors) ? 2.*multiply_elementwise(rhos._x, rhos._dx) : std::vector<double>({});
         std::vector<double> r_J  = rhos._y;
-        std::vector<double> r_dJ/*  = rhos._dy */;
+        std::vector<double> r_dJ = (errors) ? rhos._dy : std::vector<double>({});
         re.add_data({r_s, r_ds}, {r_J, r_dJ}, jpacColor::DarkGrey);
 
         std::vector<double> a_s  = square_elementwise(as._x);
-        std::vector<double> a_ds /* = 2.*multiply_elementwise(as._x, as._dx) */;
+        std::vector<double> a_ds = (errors) ? 2.*multiply_elementwise(as._x, as._dx) : std::vector<double>({});
         std::vector<double> a_J  = as._y;
-        std::vector<double> a_dJ /* = as._dy */;
+        std::vector<double> a_dJ = (errors) ?  as._dy : std::vector<double>({});
         re.add_data({a_s, a_ds}, {a_J, a_dJ}, jpacColor::DarkGrey);
 
         re.set_ranges({-2, 7.5}, {-1.5, 8.});

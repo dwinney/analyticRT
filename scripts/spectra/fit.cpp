@@ -13,6 +13,9 @@
 #include "fitter.hpp"
 #include "trajectories/polynomial.hpp"
 #include "trajectories/fiore.hpp"
+#include "hyp_2F1.hpp"
+#include "cgamma.hpp"
+
 
 using namespace analyticRT;
 
@@ -53,52 +56,54 @@ void fit()
     using namespace analyticRT;
 
     auto guess = [](double s){ return (0.5 + s)/sqrt(1. + s/10.); };
-
     trajectory alpha = new_trajectory<polynomial>(4*M2_PION, 1, guess, "Iterated trajectory");
     alpha->set_option(0);
-
     fitter<spectrum_fit> fitter(nullptr, alpha);
-
     data_set rhos = rho_spectrum();
     data_set as   = a_spectrum();
     fitter.add_data( rhos );
     fitter.add_data( as );
-    
     fitter.fix_parameter("Lambda^2", 2.0);
     fitter.fix_parameter("alpha(0)", 0.5);
-
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("c[alpha]");
-    
     fitter.do_iterative_fit({1.3, 1.4}, 20);
 
+    std::array<double,3> lambdas, sths, cs;
+    lambdas = {0.531836806,    2.33587715,     24.6842368};
+    sths    = {0.0779191396,   2.12,           30};
+    cs      = {0.143824451,    0.502572062,    37.1979956};
 
-    trajectory alpha_fiore = new_trajectory<fiore>(4.*M2_PION, "Fiore");
-    alpha_fiore->set_parameters({0.491, 0.140, 0.902, 28.031});
-    alpha_fiore->set_integrator_depth(25);
+    auto ImFiore = [lambdas,sths,cs] (double s)
+    {
+        double result = 0;
+        for (int i = 0; i < 3; i++)
+        {
+            if (s > sths[i]) result+= cs[i]*sqrt(s-sths[i])*pow(1-sths[i]/s, lambdas[i]);
+        }
+        return result;
+    };
 
-    auto re = [](trajectory alpha)
+    auto ReFiore = [lambdas,sths,cs] (double s)
     {
-        return [alpha](double s){return alpha->real_part(s);};
+        double result = 0.491;
+        for (int i = 0; i < 3; i++)
+        {
+            if (s > sths[i]) result += std::real(2./sqrt(PI)*cs[i]*cgamma(lambdas[i] + 3./2)/cgamma(lambdas[i]+1.)*sqrt(sths[i])*hyp_2F1(-lambdas[i], 1., 3./2, sths[i]/s));
+            else result += std::real(s/sqrt(PI)*cs[i]*cgamma(lambdas[i] + 3./2)/cgamma(lambdas[i]+2.)/sqrt(sths[i])*hyp_2F1(1., 1/2., lambdas[i]+2., s/sths[i]));
+        }
+        return result;
     };
-    auto im = [](trajectory alpha)
-    {
-        return [alpha](double s){return alpha->imaginary_part(s);};
-    };
-    auto gamma = [](trajectory alpha)
-    {
-        return [alpha](double s){return alpha->width(s);};
-    }; 
 
     // Set up plotter
     plotter plotter;
     
     plot J_plot = plotter.new_plot();
     J_plot.set_curve_points(200);
-    J_plot.add_curve( {-2, 7.5}, re(alpha), "Real");
-    J_plot.add_dashed({-2, 7.5}, re(alpha_fiore));
-    J_plot.add_curve( {-2, 7.5}, im(alpha), "Imaginary");
-    J_plot.add_dashed({-2, 7.5}, im(alpha_fiore));
+    J_plot.add_curve( {-2, 7.5}, [alpha](double s){ return alpha->real_part(s); },      "Real");
+    J_plot.add_dashed({-2, 7.5}, ReFiore);
+    J_plot.add_curve( {-2, 7.5}, [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    J_plot.add_dashed({-2, 7.5}, ImFiore);
     J_plot.add_curve({-2, 7.5}, [](double s){ return 0.5 + 0.9*s;}, "0.5 + 0.9 #it{s}" );
     J_plot.set_legend(0.4, .7);
     J_plot.set_legend_spacing(0.02);
@@ -112,22 +117,14 @@ void fit()
     J_plot.add_horizontal(0, {kBlack, kSolid}); 
     J_plot.save("jplot.pdf");
 
-    // plot width_plot = isovector_widths(plotter);
-    // width_plot.color_offset(2);
-    // width_plot.set_curve_points(200);
-    // width_plot.add_curve( {0., 7.5}, gamma(alpha));
-    // width_plot.add_dashed({0., 7.5}, gamma(alpha_fiore));
-
     plot HE_plot = plotter.new_plot();
-    HE_plot.set_curve_points(300);
+    HE_plot.set_curve_points(500);
     HE_plot.set_logscale(true, true);
-    HE_plot.add_curve( {1,  1E5},  re(alpha), "Real");
-    HE_plot.add_dashed( {1, 1E5}, re(alpha_fiore));
-    HE_plot.add_curve( {1,  1E5}, im(alpha), "Imaginary");
-    HE_plot.add_dashed( {1, 1E5}, im(alpha_fiore));
+    HE_plot.add_curve( {1,  1E5}, [alpha](double s){ return alpha->real_part(s); },      "Real");
+    HE_plot.add_dashed({1,  1E5}, ReFiore);
+    HE_plot.add_curve( {1,  1E5}, [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    HE_plot.add_dashed({1,  1E5}, ImFiore);
     HE_plot.add_curve({1,   1E5}, [](double s){ return 0.5 + 0.9*s;}, "0.5 + 0.9 #it{s}" );
+    HE_plot.set_labels("#it{s} [GeV^{2}]", "#alpha(#it{s})");
     HE_plot.save("heplot.pdf");
-
-    // Output to file
-    plotter.combine({2,1}, {J_plot, HE_plot}, "results.pdf");
 };

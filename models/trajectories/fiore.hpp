@@ -15,19 +15,19 @@
 #ifndef FIORE_HPP
 #define FIORE_HPP
 
-#include "trajectory.hpp"
+#include "iterable.hpp"
 
 namespace analyticRT
 {
-    class fiore : public raw_trajectory
+    class fiore : public raw_iterable
     {
         public: 
 
         // Explicitly only allow a RHC
         fiore(double R, std::string id)
-        : raw_trajectory(R, id)
+        : raw_iterable(R, id)
         {
-            set_Npars(4); 
+            set_Npars(4);
             initialize(); 
         };
 
@@ -36,7 +36,6 @@ namespace analyticRT
         {
             set_subtraction(0., pars[0]);
             for (int i = 1; i < Npars(); i++) _c[i-1] = pars[i];
-            iterate();
         };
 
         inline std::vector<std::string> parameter_labels()
@@ -44,6 +43,12 @@ namespace analyticRT
             return {"alpha(0)", "c1", "c2", "cx"};
         };
 
+        // Iteration procedure for lambdas
+        inline void iterate()
+        {
+            for (int i = 0; i < 3; i++) _lam[i] = real_part(_s[i]);
+        };
+        
         protected:
 
         // RHC given by a simple square root 
@@ -64,13 +69,8 @@ namespace analyticRT
 
         inline void initialize()
         {
+            print("wawdfadsf");
             for (int i = 0; i < 3; i++) _lam[i] = 0.491 + 0.874*_s[i];
-        };
-
-        // Iteration procedure for lambdas
-        inline void iterate()
-        {
-            for (int i = 0; i < 3; i++) _lam[i] = real_part(_s[i]);
         };
     };
 };

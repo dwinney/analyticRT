@@ -130,7 +130,7 @@ namespace analyticRT
         _Ndata++;
         _Nlegend++;
 
-        _entries.push_back(plot_entry(graph, style, true));
+        _entries.push_front(plot_entry(graph, style, true));
     };
 
     // -----------------------------------------------------------------------

@@ -18,19 +18,22 @@ namespace analyticRT
     class raw_iterable : public raw_trajectory
     {
         public:
+        raw_iterable(double R_th, std::string id)
+        : raw_trajectory(R_th, id)
+        {};
 
         raw_iterable(double R_th, std::function<double(double)> F, std::string id)
         : raw_trajectory(R_th, id), _initial_guess(F)
-        { initialize(); };
+        { this->initialize(); };
 
         raw_iterable(double R_th, int N, std::function<double(double)> F,  std::string id)
         : raw_trajectory(R_th, N, id), _initial_guess(F)
-        { initialize(); };
+        { this->initialize(); };
 
         // This is the primary new function, which is to calculate the next iteration
         // We want to control exactly when we iterate in case we need to change parameters
         // in between iterations
-        void iterate();
+        virtual void iterate();
 
         // Iterate multiple times changing the parameters in between each iteration
         template<int N>

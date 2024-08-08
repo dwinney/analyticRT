@@ -55,7 +55,7 @@ void fit()
 {   
     using namespace analyticRT;
 
-    auto guess = [](double s){ return (0.5 + s)/sqrt(1. + s/10.); };
+    auto guess = [](double s){ return (0.5 + s)/sqrt(1. + s/20.); };
     trajectory alpha = new_trajectory<polynomial>(4*M2_PION, 1, guess, "Iterated trajectory");
     alpha->set_option(0);
     fitter<spectrum_fit> fitter(nullptr, alpha);
@@ -63,7 +63,7 @@ void fit()
     data_set as   = a_spectrum();
     fitter.add_data( rhos );
     fitter.add_data( as );
-    fitter.fix_parameter("Lambda^2", 2.0);
+    fitter.fix_parameter("Lambda^2", 2.0); 
     fitter.fix_parameter("alpha(0)", 0.5);
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("c[alpha]");

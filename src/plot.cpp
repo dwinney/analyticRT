@@ -91,6 +91,9 @@ namespace analyticRT
             xlow = _xbounds[0]; xhigh = _xbounds[1];
         };
 
+        double xmin = mg->GetXaxis()->GetXmin();
+        double xmax = mg->GetXaxis()->GetXmax();
+        
         for (auto vline : _vlines)
         {
             auto vert = new TLine(vline._value, ylow, vline._value, yhigh);
@@ -107,6 +110,17 @@ namespace analyticRT
             hori->SetLineStyle(hline._linestyle);
             hori->SetLineColorAlpha(hline._color, 0.7);
             hori->Draw();
+        }
+
+        for (auto shade : _shaded)
+        {
+            double bmin = (shade._xmin < xmin) ? xmin : shade._xmin;
+            double bmax = (shade._xmax > xmax) ? xmax : shade._xmax;
+
+            TBox *b = new TBox(bmin, ylow, bmax, yhigh); 
+            b->SetFillColorAlpha(shade._color, 0.1); 
+            b->SetFillStyle(shade._style);
+            b->Draw();
         }
 
     };

@@ -54,12 +54,12 @@ void fit()
 
     // This defines the dispersive form
     trajectory alpha = new_trajectory<unitary>(J, guess, "#rho");
-    alpha->set_integrator_depth(10);
+    alpha->set_integrator_depth(20);
     
     // The trajectory defines an isobar
     isobar rho = new_isobar<truncated>(iso, 5, alpha, "truncated, n = 5");
     
-    data_set pipi_pwave = pipi::partial_wave(iso, J, 10, {0.1, 1.0});
+    data_set pipi_pwave = pipi::partial_wave(iso, J, 10, {0.1, 0.9});
 
     fitter<pipi_fit> fitter(rho, alpha);
     fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "lam2", "alpha(0)", "g", "gamma", "c"});
@@ -69,13 +69,13 @@ void fit()
     fitter.sync_parameter("g (iso)",    "g");
     fitter.sync_parameter("lam2 (iso)", "lam2");
     
-    fitter.fix_parameter("lam2",     1.5);
-    fitter.fix_parameter("alpha(0)", 0.5);
+    fitter.fix_parameter("lam2",     2.0);
+    fitter.fix_parameter("alpha(0)", 0.491);
     fitter.set_parameter_posdef("g");
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("c");
 
-    fitter.do_iterative_fit({3.16, 1.2, 5.}, 3);
+    fitter.do_iterative_fit({3.16, 1.2, 0.1}, 20, "rho_fit_2GeV");
 
     // ---------------------------------------------------------------------------
     // Make plot
@@ -83,15 +83,18 @@ void fit()
     plotter plotter;
 
     plot p1 = plotter.new_plot();
-    p1.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
-    p1.set_ranges({-0.5, 4}, {-0.5, 5});
-    p1.set_legend(0.25, 0.7);
-    p1.add_curve(  {-0.5, 4},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
-    p1.add_curve(  {-0.5, 4},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    p1.add_curve(  {-0.5, 4},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey, "0.5 + 0.9 #it{s}"));
+    p1.set_labels("#it{s}  [GeV^{2}]", "#alpha_{#rho}(#it{s})");
+    p1.set_ranges({-0.7, 1.5}, {-0.2, 2.0});
+    p1.set_legend(0.5, 0.7);
+    p1.add_curve(  {-0.7, 1.5},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
+    p1.add_curve(  {-0.7, 1.5},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    p1.add_curve(  {-0.7, 1.5},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey, "0.5 + 0.9 #it{s}"));
+    p1.add_vertical(  0, {kBlack, kSolid});
+    p1.add_horizontal(0, {kBlack, kSolid}); 
+    p1.save("alpha.pdf");
 
     plot p2 = plotter.new_plot();
-    p2.set_labels("#it{s}  [GeV^{2}]", "#it{A}_{1}^{(1)}(#it{s})");
+    p2.set_labels("#it{s}  [GeV^{2}]", "#it{f}_{1}^{1}(#it{s})");
     p2.set_ranges({0, 0.9}, {-0.7, 1.3});
     p2.set_legend(0.25, 0.7);
     p2.color_offset(2);
@@ -100,6 +103,7 @@ void fit()
     p2.add_curve( {0, 0.9},    [rho](double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(rho->direct_projection(1,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
     p2.add_curve( {STH + EPS, 1}, [](double s){ return std::real(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey, "GKPY"));
     p2.add_curve( {STH + EPS, 1}, [](double s){ return std::imag(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey));
+    p2.save("pw.pdf");
 
     plotter.combine({2,1}, {p1, p2}, "a11.pdf");
 };

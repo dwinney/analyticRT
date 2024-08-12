@@ -57,11 +57,11 @@ void fit()
     alpha->set_integrator_depth(20);
     
     // The trajectory defines an isobar
-    isobar rho = new_isobar<truncated>(iso, 5, alpha, "truncated, n = 5");
+    isobar f1 = new_isobar<truncated>(iso, 5, alpha, "truncated, n = 5");
     
     data_set pipi_pwave = pipi::partial_wave(iso, J, 10, {0.1, 0.9});
 
-    fitter<pipi_fit> fitter(rho, alpha);
+    fitter<pipi_fit> fitter(f1, alpha);
     fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "lam2", "alpha(0)", "g", "gamma", "c"});
     fitter.add_data( pipi_pwave );
 
@@ -98,9 +98,9 @@ void fit()
     p2.set_ranges({0, 0.9}, {-0.7, 1.3});
     p2.set_legend(0.25, 0.7);
     p2.color_offset(2);
-    p2.add_curve(  {0,1},      [rho](double s){ return std::real(rho->direct_projection(1, s));} , "Real");
-    p2.add_curve(  {0,1},      [rho](double s){ return std::imag(rho->direct_projection(1, s)); }, "Imaginary");
-    p2.add_curve( {0, 0.9},    [rho](double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(rho->direct_projection(1,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
+    p2.add_curve(  {0,1},      [f1](double s){ return std::real(f1->direct_projection(1, s));} , "Real");
+    p2.add_curve(  {0,1},      [f1](double s){ return std::imag(f1->direct_projection(1, s)); }, "Imaginary");
+    p2.add_curve( {0, 0.9},    [f1](double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(f1->direct_projection(1,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
     p2.add_curve( {STH + EPS, 1}, [](double s){ return std::real(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey, "GKPY"));
     p2.add_curve( {STH + EPS, 1}, [](double s){ return std::imag(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey));
     p2.save("pw.pdf");

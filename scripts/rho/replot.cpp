@@ -34,7 +34,7 @@ void replot()
     alpha->set_integrator_depth(20);
 
     // The trajectory defines an isobar
-    isobar rho = new_isobar<truncated>(iso, 5, alpha, "truncated, n = 5");
+    isobar f1 = new_isobar<truncated>(iso, 5, alpha, "truncated, n = 5");
 
     // ---------------------------------------------------------------------------
     // Import parameters from file
@@ -73,9 +73,9 @@ void replot()
     p2.set_ranges({0, 1}, {-0.7, 1.3});
     p2.set_legend(0.25, 0.7);
     p2.color_offset(2);
-    p2.add_curve(  {0,1},      [rho](double s){ return std::real(rho->direct_projection(1, s));} , "Real");
-    p2.add_curve(  {0,1},      [rho](double s){ return std::imag(rho->direct_projection(1, s)); }, "Imaginary");
-    p2.add_curve( {0, 1},    [rho](double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(rho->direct_projection(1,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
+    p2.add_curve(  {0,1},     [f1](double s){ return std::real(f1->direct_projection(1, s));} , "Real");
+    p2.add_curve(  {0,1},     [f1](double s){ return std::imag(f1->direct_projection(1, s)); }, "Imaginary");
+    p2.add_curve( {0, 1},     [f1](double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(f1->direct_projection(1,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
     p2.add_curve( {STH + EPS, 1}, [](double s){ return std::real(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey, "GKPY"));
     p2.add_curve( {STH + EPS, 1}, [](double s){ return std::imag(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey));
     p2.save("pw_rho.pdf");

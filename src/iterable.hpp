@@ -55,7 +55,7 @@ namespace analyticRT
         
         // Evaluate the last saved iteration of the real part
         inline double previous_real(double s){ return (s <= _sAsym) ? _ReAlphaInterp.Eval(s) : _ReAlphaAsym * sqrt(s / _sAsym); };
-        inline double previous_imag(double s){ return (s <= _sAsym) ? _ImAlphaInterp.Eval(s) : _ImAlphaAsym * sqrt(s / _sAsym)* log(s)/log(_sAsym); };
+        inline double previous_imag(double s){ return (s <= _sAsym) ? _ImAlphaInterp.Eval(s) : _ImAlphaAsym * sqrt(s / _sAsym)* log(exp(1) + s - _sAsym); };
         
         // 
         inline complex previous_evaluate(double s){ return previous_real(s) + I*previous_imag(s); };

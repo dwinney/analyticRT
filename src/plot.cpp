@@ -22,6 +22,8 @@ namespace analyticRT
             warning("plot::save()", "No entries added! Returning...");
             return;
         };
+
+        _canvas->cd();
         
         // Logscale settings are global canvas settings so do that first
         _canvas->SetLogx(_xlog); _canvas->SetLogy(_ylog);

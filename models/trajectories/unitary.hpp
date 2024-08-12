@@ -29,12 +29,14 @@ namespace analyticRT
 
             double  q2hat   = (s - _sRHC) / 4. / _lam2;
             double  rho     = sqrt(1. - _sRHC / s);
-            double  beta    = _g / (2.*_jmin + 1.);
             double  gamma   = _gamma / PI;
+            
+            double beta = pow(q2hat, _jmin)*_g/(2.*_jmin+1.);
+            if (_constant) beta *= std::norm(1. + _gp/_g*previous_evaluate(s));
 
-            double exponent = 1+previous_real(s);
-            if (s >= 200 && exponent > _jmin && !is_zero(_c)) return gamma*(exponent*log(q2hat) + log(_c/gamma));
-            return gamma*log(1. + rho/gamma*(pow(q2hat, _jmin)*beta + _c*pow(q2hat, exponent)));         
+            double exponent = 1. + previous_real(s);
+            if (s >= 200 && exponent > 0 && _c*pow(q2hat, exponent) >= 10*beta) return gamma*(exponent*log(q2hat) + log(_c/gamma));
+            return gamma*log(1. + rho/gamma*(beta + _c*pow(q2hat, exponent)));         
         };
         
         static const int kAddConstant    = 1;

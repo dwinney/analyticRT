@@ -37,7 +37,7 @@ struct swave_fit
     };
 };
 
-void iterative_fit()
+void fit()
 {
     using namespace analyticRT;
     using complex = std::complex<double>;
@@ -47,12 +47,9 @@ void iterative_fit()
 
     // -------------------------------- ------------------------------------------
     // Set up the unitary dispersive trajectory
-    auto guess = [](double s){ return (-0.2 + 0.1*s)/sqrt(1.+s/20.); };
 
-    trajectory alpha = new_trajectory<unitary>(iso, guess, "sigma");
-    alpha->set_option(unitary::kAddConstant);
-    // alpha->set_integrator_depth(10);
-    iterable(alpha)->set_interp_pars(600, {50, 1500});
+    trajectory alpha = new_trajectory<unitary>(iso, "sigma");
+    alpha->set_option(unitary::kExpandAlpha);
 
     // The trajectory defines an isobar
     isobar f0 = new_isobar<truncated>(iso, 0, alpha, "I = 0 only");
@@ -62,9 +59,9 @@ void iterative_fit()
     // If fitting doing a fit uncomment this
 
     fitter<swave_fit> fitter(f0, alpha);
-    fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "gp (iso)", "lam2", "alpha(0)", "g", "gamma", "c", "gp"});
-    fitter.add_data( pipi::partial_wave(iso, J,  10, {0.1, 0.70}) );
-    fitter.add_data( pipi::partial_wave(iso, J,  5,  {STH, 0.15}) );
+    fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "gp (iso)", "lam2", "alpha(sth)", "g", "gamma", "c", "gp"});
+    fitter.add_data( pipi::partial_wave(iso, J,  10, {0.1, 0.55}) );
+    fitter.add_data( pipi::partial_wave(iso, J,  2,  {STH, 0.08}) );
 
     // Sync isobar's parameters to the trajectory as required by unitarity
     fitter.sync_parameter("g (iso)",    "g");
@@ -77,17 +74,7 @@ void iterative_fit()
     fitter.set_parameter_posdef("g");
     fitter.set_parameter_posdef("c");
 
-    fitter.do_iterative_fit({-0.175403, 0.198617, 0.554793, 1.0784, 1.01672}, 1, "sigma_w_asymptotic_term");
-
-    // --------------------------------------------------------------------------
-
-    // // IF JUST PLOTTING
-    // for (int i = 0; i < pars.size(); i++) 
-    // { 
-    //     alpha->set_parameters(pars[i]); 
-    //     if (i == pars.size() - 1) f0->set_parameters({pars[i][0], pars[i][2], pars[i][5]});
-    //     else alpha->iterate(); 
-    // };
+    fitter.do_fit({-0.055127793, 0.25925064, 0.0095061056, 1.8769134, 4.5035799});
 
     // ---------------------------------------------------------------------------
     // Make plot
@@ -109,11 +96,8 @@ void iterative_fit()
     plot p2 = plotter.new_plot();
     p2.set_labels("#it{s}  [GeV^{2}]", "#alpha(#it{s})");
     p2.set_legend(0.65, 0.2);
-    // p2.print_to_terminal(true);
     p2.add_curve( {-0.5,  2}, [alpha](double s){ return alpha->real_part(s); },              "Real");
     p2.add_curve( {-0.5,  2}, [alpha](double s){ return alpha->imaginary_part(s); },         "Imaginary");
-    p2.add_curve( {STH+EPS,  2},  [alpha](double s){ return iterable(alpha)->previous_real(s); }, solid(jpacColor::DarkGrey, "Previous iteration"));
-    p2.add_curve( {STH+EPS,  2},  [alpha](double s){ return iterable(alpha)->previous_imag(s); }, dashed(jpacColor::DarkGrey));
 
     plotter.combine({2,1}, {p2,p1}, "a00_results.pdf");
 };

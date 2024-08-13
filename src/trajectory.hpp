@@ -140,6 +140,9 @@ namespace analyticRT
         // Depth of bisections in adaptive integrator
         int _depth = 10;
         
+        // Some flag to change model options
+        int _option = 0, _debug = 0;
+
         // -------------------------------------------------------------------
         private:
 
@@ -152,9 +155,6 @@ namespace analyticRT
 
         // Number of free parameters
         int _Npars  = 0;
-
-        // Some flag to change model options
-        int _option = 0, _debug = 0;
     };
 };
 

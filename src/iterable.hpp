@@ -55,10 +55,17 @@ namespace analyticRT
         
         // Evaluate the last saved iteration of the real part
         inline double previous_real(double s){ return (s <= _sAsym) ? _ReAlphaInterp.Eval(s) : _ReAlphaAsym * sqrt(s / _sAsym); };
+
+        // Evaluate the last saved iteration of the imaginary part
+        // This matching really sucks but it doesnt matter if you interpolate high enough for the most part
         inline double previous_imag(double s){ return (s <= _sAsym) ? _ImAlphaInterp.Eval(s) : _ImAlphaAsym * sqrt(s / _sAsym)* log(exp(1) + s - _sAsym); };
-        
-        // 
+
+        // Do them both at the same time
         inline complex previous_evaluate(double s){ return previous_real(s) + I*previous_imag(s); };
+
+        // Change the saved initial guess. 
+        // This also automatically will reinitialize the amplitude
+        inline void change_guess(std::function<double(double)> F){ _initial_guess = F; this->initialize(); };
 
         // ---------------------------------------------------------------------------
     

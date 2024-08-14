@@ -69,7 +69,7 @@ void replot()
     p1.save("timelike.pdf");
 
     plot p2 = plotter.new_plot();
-    p2.set_labels("#it{s}  [GeV^{2}]", "#it{f}_{#kern[-0.7]{1}}^{#kern[-0.7]{1}}(#it{s})");
+    p2.set_labels("#it{s}  [GeV^{2}]", "#it{f}_{1}^{1}(#it{s})");
     p2.set_ranges({0, 1}, {-0.7, 1.3});
     p2.set_legend(0.25, 0.7);
     p2.color_offset(2);

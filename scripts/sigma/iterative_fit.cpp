@@ -51,7 +51,6 @@ void iterative_fit()
 
     trajectory alpha = new_trajectory<unitary>(iso, guess, "sigma");
     alpha->set_option(unitary::kAddConstant);
-    // alpha->set_integrator_depth(10);
     iterable(alpha)->set_interp_pars(600, {50, 1500});
 
     // The trajectory defines an isobar
@@ -62,8 +61,8 @@ void iterative_fit()
     // If fitting doing a fit uncomment this
 
     fitter<swave_fit> fitter(f0, alpha);
-    fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "gp (iso)", "lam2", "alpha(0)", "g", "gamma", "c", "gp"});
-    fitter.add_data( pipi::partial_wave(iso, J,  10, {0.1, 0.70}) );
+    fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "gp (iso)", "lam2", "alpha(0)", "g", "gp", "gamma", "c"});
+    fitter.add_data( pipi::partial_wave(iso, J,  10, {0.1, 0.60}) );
     fitter.add_data( pipi::partial_wave(iso, J,  5,  {STH, 0.15}) );
 
     // Sync isobar's parameters to the trajectory as required by unitarity
@@ -75,19 +74,10 @@ void iterative_fit()
 
     fitter.set_parameter_posdef("gamma");
     fitter.set_parameter_posdef("g");
+    fitter.set_parameter_posdef("gp");
     fitter.set_parameter_posdef("c");
 
-    fitter.do_iterative_fit({-0.175403, 0.198617, 0.554793, 1.0784, 1.01672}, 1, "sigma_w_asymptotic_term");
-
-    // --------------------------------------------------------------------------
-
-    // // IF JUST PLOTTING
-    // for (int i = 0; i < pars.size(); i++) 
-    // { 
-    //     alpha->set_parameters(pars[i]); 
-    //     if (i == pars.size() - 1) f0->set_parameters({pars[i][0], pars[i][2], pars[i][5]});
-    //     else alpha->iterate(); 
-    // };
+    fitter.do_iterative_fit({-0.181640798, 0.227942035, 1.16959135, 0.522641701, 1.05323747}, 2);
 
     // ---------------------------------------------------------------------------
     // Make plot

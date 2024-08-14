@@ -46,7 +46,7 @@ void replot()
     auto traj_pars = import_transposed<21>(dir + file_prefix + "traj_pars.txt");
 
     iterable(alpha)->iterate<21>(traj_pars, 21);
-    rho->set_parameters(iso_pars.back());
+    f1->set_parameters(iso_pars.back());
 
     // ---------------------------------------------------------------------------
     // Make plot
@@ -58,11 +58,11 @@ void replot()
 
     plot p1 = plotter.new_plot();
     p1.set_labels("#it{s}  [GeV^{2}]", "#alpha_{#rho}(#it{s})");
-    p1.set_ranges({-0.1, 1.5}, {0., 2.0});
+    p1.set_ranges({-0.2, 1.5}, {0., 2.0});
     p1.set_legend(0.4, 0.7);
-    p1.add_curve(  {-0.1, 1.5},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
-    p1.add_curve(  {-0.1, 1.5},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    p1.add_curve(  {-0.1, 1.5},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey, "0.5 + 0.9 #it{s}"));
+    p1.add_curve(  {-0.2, 1.5},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
+    p1.add_curve(  {-0.2, 1.5},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    p1.add_curve(  {-0.2, 1.5},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey, "0.5 + 0.9 #it{s}"));
     p1.add_data({square_elementwise(rhos._x), {}}, {rhos._y, {}}, jpacColor::DarkGrey);
     p1.add_vertical(  0, {kBlack, kSolid});
     p1.shade_region({STH,1});

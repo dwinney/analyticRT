@@ -37,12 +37,12 @@ namespace analyticRT
             
             double beta = pow(q2hat, _jmin)*_g/(2.*_jmin+1.);
             if (option() == kAddConstant) beta *= std::norm(1. + _gp/_g*previous_evaluate(s));
-            if (option() == kExpandAlpha) beta *= std::norm(1. + _gp/_g*(_alphaSUB + _c*pow(q2hat, 4./3)));
+            if (option() == kExpandAlpha) beta *= std::norm(1. + _gp/_g*(_alphaSUB + _c*pow(q2hat, 2.)));
 
             // Whether or not to have 
             bool   second_term  = option() != kExpandAlpha;
             double exponent     = (second_term) ? 1. + previous_real(s) : 0.;
-            bool   to_simplify  = (second_term) ? false                 // We have driving term
+            bool   to_simplify  = (!second_term) ? false                 // We have driving term
                                 : (s >= 200)                            // q2hat is large
                                && (exponent > 0)                        // exponent is positive
                                && (_c*pow(q2hat, exponent) >= 10*beta); // _c is not too small
@@ -75,9 +75,12 @@ namespace analyticRT
             _lam2  = pars[0];                    // Lambda^2 scale
             set_subtraction(sub_point, pars[1]); // alpha(s_sub)
             _g     = pars[2];                    // Coupling 
-            _gamma = pars[3];                    // Slope parameter
-            _c     = pars[4];                    // Extra coupling in polynomial
-            if (option() != kDefault) _gp  = pars[5];
+            bool have_gp = (option() != kDefault);
+            if (have_gp) _gp  = pars[3];
+            _gamma = pars[3+have_gp];            // Slope parameter
+            _c     = pars[4+have_gp];            // Extra coupling in polynomial
+
+            // print(_gp, _gamma, _c);
         };
 
         // Members related to the model for the imaginary part along the RHC

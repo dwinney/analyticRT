@@ -1,4 +1,4 @@
-// Iterative and 
+// Iterative and dispersive form of the trajectory given by a unitarizable log form
 //
 // Author:       Daniel Winney (2023)
 // Affiliation:  Joint Physics Analysis Center (JPAC)
@@ -39,7 +39,7 @@ namespace analyticRT
             if (option() == kAddConstant) beta *= std::norm(1. + _gp/_g*previous_evaluate(s));
             if (option() == kExpandAlpha) beta *= std::norm(1. + _gp/_g*(_alphaSUB + _c*pow(q2hat, 2.)));
 
-            // Whether or not to have 
+            // Whether or not to have a second term that goes like s^s. 
             bool   second_term  = option() != kExpandAlpha;
             double exponent     = (second_term) ? 1. + previous_real(s) : 0.;
             bool   to_simplify  = (!second_term) ? false                 // We have driving term

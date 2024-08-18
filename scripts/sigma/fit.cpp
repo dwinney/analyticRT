@@ -60,8 +60,8 @@ void fit()
 
     fitter<swave_fit> fitter(f0, alpha);
     fitter.set_parameter_labels({"lam2 (iso)", "g (iso)", "gp (iso)", "lam2", "alpha(sth)", "g", "gp", "gamma", "c"});
-    fitter.add_data( pipi::partial_wave(iso, J,  10, {0.2, 0.60}) );
-    fitter.add_data( pipi::partial_wave(iso, J,  10, {STH, 0.1}) );
+    fitter.add_data( pipi::partial_wave(iso, J,  50, {STH, 0.75}) );
+    // fitter.add_data( pipi::partial_wave(iso, J,  10, {STH, 0.15}) );
 
     // Sync isobar's parameters to the trajectory as required by unitarity
     fitter.sync_parameter("g (iso)",    "g");
@@ -74,13 +74,27 @@ void fit()
     fitter.set_parameter_posdef("g");
     fitter.set_parameter_posdef("c");
 
-    // k = 2 and up to 0.40
-    fitter.do_fit({ -0.056164337, 0.21948343, 3.6842419, 0.0069999613, 41.747148});
+    // fitter.fix_parameter("alpha(sth)",-0.08398);
+    // fitter.do_fit({ /* -0.08378, */ 0.21394933, 2.2564092, 0.016993039, 77.467025});
+
+    fitter.fix_parameter("alpha(sth)",-6.3754E-2);
+    fitter.do_fit({0.16240145, 2.2566997, 0.012895485, 58.793184});
 
     print("alpha(0) = ", alpha->real_part(0));
 
+    std::vector<double> ss = {0.2, 0.4, 0.6, 0.8, 1.0};
+    line();
+    print("s", "RePart", "ImPart");
+    for (auto x : ss)
+    {
+        print(x, alpha->real_part(x), alpha->imaginary_part(x));
+    };
+
     // ---------------------------------------------------------------------------
     // Make plot
+
+    std::string dir = "scripts/sigma/";
+    auto jrp_curves = import_data<5>(dir + "alpha-sig-error-plb-central.dat");
 
     plotter plotter;
 
@@ -88,7 +102,7 @@ void fit()
     p1.set_labels("#it{s}  [GeV^{2}]", "#it{f}^{0}_{0}(#it{s})");
     p1.color_offset(2);
     p1.set_legend(0.25, 0.7);
-    p1.set_ranges({0, 0.9}, {-0.3, 1.7});
+    p1.set_ranges({0, 0.9}, {-0.3, 1.5});
     p1.add_curve( {0, 0.9},  [f0]( double s){ return std::real(f0->direct_projection(0, s)); }, "Real");
     p1.add_curve( {0, 0.9},  [f0]( double s){ return std::imag(f0->direct_projection(0, s)); }, "Imaginary");
     p1.add_curve( {0, 0.9},  [f0]( double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(f0->direct_projection(0,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
@@ -98,13 +112,16 @@ void fit()
 
     plot p2 = plotter.new_plot();
     p2.set_labels("#it{s}  [GeV^{2}]", "#alpha_{#sigma}(#it{s})");
-    p2.set_ranges({-0.2, 1.5}, {-0.08, 0.04});
-    p2.set_legend(0.65, 0.4);
-    p2.shade_region({STH, 0.6});
+    p2.set_ranges({-0.2, 1.5}, {-0.09, 0.12});
+    p2.set_legend(0.67, 0.3);
+    p2.set_legend_spacing(0.02);
+    p2.shade_region({STH, 0.75});
     p2.add_vertical(  0, {kBlack, kSolid});
     p2.add_horizontal(0, {kBlack, kSolid}); 
     p2.add_curve( {-0.2,  1.5}, [alpha](double s){ return alpha->real_part(s); },              "Real");
+    p2.add_dashed( jrp_curves[0], jrp_curves[1]);
     p2.add_curve( {-0.2,  1.5}, [alpha](double s){ return alpha->imaginary_part(s); },         "Imaginary");
+    p2.add_dashed( jrp_curves[0], jrp_curves[2]);
     p2.add_data({std::vector<double>({0.5*0.5}),{}}, {std::vector<double>({0.}), {}}, jpacColor::DarkGrey);
     p2.save("alpha_sigma.pdf");
 

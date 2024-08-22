@@ -55,41 +55,37 @@ void plot_iterations()
 
     plotter plotter;
 
-    plot p1 = plotter.new_plot();
-    p1.set_labels("#it{s}  [GeV^{2}]", "#it{f}^{0}_{0}(#it{s})");
-    p1.set_legend(0.25, 0.7);
-    p1.set_ranges({0, 0.9}, {-0.3, 1.6});
-
     double smax = 1.5;
     plot p2 = plotter.new_plot();
+    p2.add_logo(false);
     p2.set_labels("#it{s}  [GeV^{2}]", "#alpha_{#sigma}(#it{s})");
     p2.set_ranges({-0.2, smax}, {-0.25, 0.23});
     p2.set_curve_points(200);
-    p2.set_legend(0.3, 0.7);
-    p2.shade_region({STH, 0.6});
+    p2.set_legend(0.30, 0.7);
+    p2.shade_region({STH, 0.5});
     p2.add_vertical(  0, {kBlack, kSolid});
     p2.add_horizontal(0, {kBlack, kSolid}); 
 
-    p1.add_curve( {STH + EPS, 0.9}, [](double s){ return std::real(pipi::partial_wave(0, 0, s));}, solid(jpacColor::DarkGrey, "GKPY"));
-    p1.add_curve( {STH + EPS, 0.9}, [](double s){ return std::imag(pipi::partial_wave(0, 0, s));}, dashed(jpacColor::DarkGrey        ));
-
-    p2.add_curve( {-0.2, smax}, guess, solid(jpacColor::DarkGrey, "Initial guess"));
-    p2.add_curve( {-0.2, smax}, [&](double s){return 0.;}, dashed(jpacColor::DarkGrey));
+    auto reIni = p2.add_curve( {-0.2, smax}, guess, solid(jpacColor::DarkGrey, "Guess"));
+    auto imIni = p2.add_curve( {-0.2, smax}, [&](double s){return 0.;}, dashed(jpacColor::DarkGrey));
 
     std::vector<std::string> labels = {"0^{th} iter.", "1^{st} iter.", "2^{nd} iter."};
+
+    std::vector<std::array<std::vector<double>,2>> re_curves, im_curves;
     for (int i = 0; i < pars.size(); i++) 
     { 
         alpha->set_parameters(pars[i]); 
-        f0->set_parameters({pars[i][0], pars[i][2], pars[i][3]});
 
-        p1.add_curve(  {0, 0.9},   [&](double s){ return std::real(f0->direct_projection(0, s)); }, labels[i]);
-        p1.add_dashed( {0, 0.9},   [&](double s){ return std::imag(f0->direct_projection(0, s)); });
+        auto reIter = p2.add_curve(  {-0.2,  smax}, [&](double s){ return alpha->real_part(s); },                labels[i]);
+        auto imIter = p2.add_dashed( {-0.2,  smax}, [&](double s){ return alpha->imaginary_part(s); });
 
-        p2.add_curve(  {-0.2,  smax}, [&](double s){ return alpha->real_part(s); },                labels[i]);
-        p2.add_dashed( {-0.2,  smax}, [&](double s){ return alpha->imaginary_part(s); });
+        re_curves.push_back(reIter);
+        im_curves.push_back(imIter);
         alpha->iterate(); 
     };
 
-    p1.save("f00_iters.pdf");
-    p2.save("alpha_sigma_iters.pdf");
+    print_to_file<9>("fig8.txt", {"s", "ReInitial", "ImInitial", "Re0", "Im0", "Re1", "Im1", "Re2", "Im2"}, 
+                                 {reIni[0], reIni[1], imIni[1], re_curves[0][1], im_curves[0][1], re_curves[1][1], im_curves[1][1], re_curves[2][1], im_curves[2][1]});
+
+    p2.save("alpha_iters.pdf");
 };

@@ -122,7 +122,7 @@ void fit()
     p3.add_data({-dat[0], dat[1]/2}, {dat[2], dat[3]});
     p3.save("spacelike.pdf");
 
-    print_to_file<6>("fig5.txt", {"s", "ReF00", "ImF00", "Ex_Uni", "ReGKPY", "ImGKPY"}, {reF00[0], reF00[1], imF00[1], imUni[1], reGKPY[1], imGKPY[1]});
-    print_to_file<4>("fig6.txt", {"s", "ReAlpha", "ImAlpha", "Linear"}, {reAlp[0], reAlp[1], imAlp[1], Lin[1]});
-    print_to_file<3>("fig7.txt", {"s", "ReAlpha", "Linear"}, {reTL[0], reTL[1], liTL[1]});
+    // print_to_file<6>("fig5.txt", {"s", "ReF00", "ImF00", "Ex_Uni", "ReGKPY", "ImGKPY"}, {reF00[0], reF00[1], imF00[1], imUni[1], reGKPY[1], imGKPY[1]});
+    // print_to_file<4>("fig6.txt", {"s", "ReAlpha", "ImAlpha", "Linear"}, {reAlp[0], reAlp[1], imAlp[1], Lin[1]});
+    // print_to_file<3>("fig7.txt", {"s", "ReAlpha", "Linear"}, {reTL[0], reTL[1], liTL[1]});
 };

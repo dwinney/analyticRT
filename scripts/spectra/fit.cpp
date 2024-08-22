@@ -130,6 +130,6 @@ void fit()
     HE_plot.set_labels("#it{s} [GeV^{2}]", "#alpha(#it{s})");
     HE_plot.save("heplot.pdf");
 
-    print_to_file<6>("jplot.txt",  {"s", "ReAlpha", "ImAlpha", "ReFiore", "ImFiore", "Linear"}, { rUs[0],  rUs[1],  iUs[1],  rFi[1],  iFi[1],  Lin[1]});
-    print_to_file<6>("heplot.txt", {"s", "ReAlpha", "ImAlpha", "ReFiore", "ImFiore", "Linear"}, {hrUs[0], hrUs[1], hiUs[1], hrFi[1], hiFi[1], hLin[1]});
+    // print_to_file<6>("jplot.txt",  {"s", "ReAlpha", "ImAlpha", "ReFiore", "ImFiore", "Linear"}, { rUs[0],  rUs[1],  iUs[1],  rFi[1],  iFi[1],  Lin[1]});
+    // print_to_file<6>("heplot.txt", {"s", "ReAlpha", "ImAlpha", "ReFiore", "ImFiore", "Linear"}, {hrUs[0], hrUs[1], hiUs[1], hrFi[1], hiFi[1], hLin[1]});
 };

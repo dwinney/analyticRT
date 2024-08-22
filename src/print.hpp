@@ -13,6 +13,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <vector>
 #include <complex> 
@@ -98,6 +99,36 @@ namespace analyticRT
         int x = words.length();
         int gap_width = (n * PRINT_SPACING - x)/2;
         std::cout << std::left << std::setw(gap_width) << "" << std::setw(x) << words << std::setw(gap_width) << "" << std::endl;
+    };
+
+    // ---------------------------------------------------------------------------
+    // Print N columns of data to file
+    // We assume theyre all the same size, if not this breaks and its not our fault
+    template<int N>
+    inline void print_to_file(std::string outname, std::array<std::string,N> headers, std::array<std::vector<double>,N> data)
+    {
+        std::ofstream out;
+        out.open(outname);
+
+        out << std::left << std::setw(PRINT_SPACING) << "#" + headers[0];
+        for (int i = 1; i < N; i++)
+        {
+            out << std::setw(PRINT_SPACING) << headers[i]; 
+        };
+        out << std::endl;
+
+        for (int j = 0; j < data[0].size(); j++)
+        {
+            out << std::left;
+            for (int i = 0; i < N; i++)
+            {
+                out << std::setw(PRINT_SPACING) << data[i][j];
+            }
+            out << std::endl;
+        };
+
+        out.close();
+        return;
     };
 };
 

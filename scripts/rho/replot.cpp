@@ -45,7 +45,7 @@ void replot()
     auto iso_pars  = import_transposed<21>(dir + file_prefix + "iso_pars.txt");
     auto traj_pars = import_transposed<21>(dir + file_prefix + "traj_pars.txt");
 
-    iterable(alpha)->iterate<21>(traj_pars, 21);
+    iterable(alpha)->iterate<21>(traj_pars, 20);
     f1->set_parameters(iso_pars.back());
 
     // ---------------------------------------------------------------------------

@@ -36,19 +36,19 @@ namespace analyticRT
             double  gamma   = _gamma / PI;
             
             double beta = pow(q2hat, _jmin)*_g/(2.*_jmin+1.);
+            if (option() == kExpandAlpha)
+            {
+                return rho/_g*std::norm(_g + _gp*(_alphaSUB + _c*rho*log(s/_sRHC))); 
+            };
             if (option() == kAddConstant) beta *= std::norm(1. + _gp/_g*previous_evaluate(s));
-            if (option() == kExpandAlpha) beta *= std::norm(1. + _gp/_g*(_alphaSUB + _c*pow(q2hat, 2.)));
 
-            // Whether or not to have a second term that goes like s^s. 
-            bool   second_term  = option() != kExpandAlpha;
-            double exponent     = (second_term) ? 1. + previous_real(s) : 0.;
-            bool   to_simplify  = (!second_term) ? false                 // We have driving term
-                                : (s >= 200)                            // q2hat is large
-                               && (exponent > 0)                        // exponent is positive
-                               && (_c*pow(q2hat, exponent) >= 10*beta); // _c is not too small
+            double exponent     = 1. + previous_real(s);
+            bool   to_simplify  = (s >= 200)                             // q2hat is large
+                               && (exponent > 0)                         // exponent is positive
+                               && (_c*pow(q2hat, exponent) >= 10*beta);  // _c is not too small
 
             if (to_simplify) return gamma*(exponent*log(q2hat) + log(_c/gamma));
-            return gamma*log(1. + rho/gamma*(beta + second_term*_c*pow(q2hat, exponent)));         
+            return rho*gamma*log(1. + 1./gamma*(beta + _c*pow(q2hat, exponent)));        
         };
         
         static const int kDefault        = 0;
@@ -60,7 +60,7 @@ namespace analyticRT
             {
                 case (kDefault)        : { _gp = 0; set_Npars(5); break; };
                 case (kAddConstant)    : { set_Npars(6); break; }; 
-                case (kExpandAlpha)    : { set_Npars(6); break; };
+                case (kExpandAlpha)    : { _gamma = 0.; set_Npars(5); break; };
                 default: return;
             }
             _option = opt;
@@ -75,12 +75,11 @@ namespace analyticRT
             _lam2  = pars[0];                    // Lambda^2 scale
             set_subtraction(sub_point, pars[1]); // alpha(s_sub)
             _g     = pars[2];                    // Coupling 
-            bool have_gp = (option() != kDefault);
+            bool have_gp  = (option() != kDefault);
+            bool have_gam = (option() != kExpandAlpha);
             if (have_gp) _gp  = pars[3];
-            _gamma = pars[3+have_gp];            // Slope parameter
-            _c     = pars[4+have_gp];            // Extra coupling in polynomial
-
-            // print(_gp, _gamma, _c);
+            if (have_gam) _gamma = pars[3+have_gp];       // Slope parameter
+            _c     = pars[3+have_gp+have_gam];            // Extra coupling in polynomial
         };
 
         // Members related to the model for the imaginary part along the RHC

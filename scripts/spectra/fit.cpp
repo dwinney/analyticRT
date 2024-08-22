@@ -99,12 +99,13 @@ void fit()
     plotter plotter;
     
     plot J_plot = plotter.new_plot();
+    J_plot.add_logo(false);
     J_plot.set_curve_points(200);
-    J_plot.add_curve( {-2, 7.5}, [alpha](double s){ return alpha->real_part(s); },      "Real");
-    J_plot.add_dashed({-2, 7.5}, ReFiore);
-    J_plot.add_curve( {-2, 7.5}, [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    J_plot.add_dashed({-2, 7.5}, ImFiore);
-    J_plot.add_curve({-2, 7.5}, [](double s){ return 0.5 + 0.9*s;}, "0.5 + 0.9 #it{s}" );
+    auto rUs = J_plot.add_curve( {-2, 7.5}, [alpha](double s){ return alpha->real_part(s); },      "Real");
+    auto rFi = J_plot.add_dashed({-2, 7.5}, ReFiore);
+    auto iUs = J_plot.add_curve( {-2, 7.5}, [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    auto iFi = J_plot.add_dashed({-2, 7.5}, ImFiore);
+    auto Lin = J_plot.add_curve( {-2, 7.5}, [](double s){ return 0.5 + 0.9*s;}, "0.5 + 0.9 #it{s}" );
     J_plot.set_legend(0.4, .7);
     J_plot.set_legend_spacing(0.02);
 
@@ -118,13 +119,17 @@ void fit()
     J_plot.save("jplot.pdf");
 
     plot HE_plot = plotter.new_plot();
+    HE_plot.add_logo(false);
     HE_plot.set_curve_points(500);
     HE_plot.set_logscale(true, true);
-    HE_plot.add_curve( {1,  1E5}, [alpha](double s){ return alpha->real_part(s); },      "Real");
-    HE_plot.add_dashed({1,  1E5}, ReFiore);
-    HE_plot.add_curve( {1,  1E5}, [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    HE_plot.add_dashed({1,  1E5}, ImFiore);
-    HE_plot.add_curve({1,   1E5}, [](double s){ return 0.5 + 0.9*s;}, "0.5 + 0.9 #it{s}" );
+    auto hrUs = HE_plot.add_curve( {1,  1E5}, [alpha](double s){ return alpha->real_part(s); },      "Real");
+    auto hrFi = HE_plot.add_dashed({1,  1E5}, ReFiore);
+    auto hiUs = HE_plot.add_curve( {1,  1E5}, [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    auto hiFi = HE_plot.add_dashed({1,  1E5}, ImFiore);
+    auto hLin = HE_plot.add_curve( {1,  1E5}, [](double s){ return 0.5 + 0.9*s;}, "0.5 + 0.9 #it{s}" );
     HE_plot.set_labels("#it{s} [GeV^{2}]", "#alpha(#it{s})");
     HE_plot.save("heplot.pdf");
+
+    print_to_file<6>("jplot.txt",  {"s", "ReAlpha", "ImAlpha", "ReFiore", "ImFiore", "Linear"}, { rUs[0],  rUs[1],  iUs[1],  rFi[1],  iFi[1],  Lin[1]});
+    print_to_file<6>("heplot.txt", {"s", "ReAlpha", "ImAlpha", "ReFiore", "ImFiore", "Linear"}, {hrUs[0], hrUs[1], hiUs[1], hrFi[1], hiFi[1], hLin[1]});
 };

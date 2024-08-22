@@ -7,6 +7,7 @@
 
 #include "isobars/truncated.hpp"
 #include "trajectories/unitary.hpp"
+#include "spectrum_data.hpp"
 
 #include "kinematics.hpp"
 #include "pipi.hpp"
@@ -82,28 +83,46 @@ void fit()
 
     plotter plotter;
 
+    data_set rhos = rho_spectrum();
+    data_set as   = a_spectrum();
+
     plot p1 = plotter.new_plot();
+    p1.add_logo(false);
     p1.set_labels("#it{s}  [GeV^{2}]", "#alpha_{#rho}(#it{s})");
-    p1.set_ranges({-0.7, 1.5}, {-0.2, 2.0});
-    p1.set_legend(0.5, 0.7);
-    p1.add_curve(  {-0.7, 1.5},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
-    p1.add_curve(  {-0.7, 1.5},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
-    p1.add_curve(  {-0.7, 1.5},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey, "0.5 + 0.9 #it{s}"));
+    p1.set_ranges({-0.2, 1.5}, {0., 2.0});
+    p1.set_legend(0.4, 0.7);
+    auto reAlp = p1.add_curve(  {-0.2, 1.5},      [alpha](double s){ return alpha->real_part(s);} ,      "Real");
+    auto imAlp = p1.add_curve(  {-0.2, 1.5},      [alpha](double s){ return alpha->imaginary_part(s); }, "Imaginary");
+    auto Lin   = p1.add_curve(  {-0.2, 1.5},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey, "0.5 + 0.9 #it{s}"));
+    p1.add_data({square_elementwise(rhos._x), {}}, {rhos._y, {}}, jpacColor::DarkGrey);
     p1.add_vertical(  0, {kBlack, kSolid});
-    p1.add_horizontal(0, {kBlack, kSolid}); 
-    p1.save("alpha.pdf");
+    p1.shade_region({STH,1});
+    p1.save("timelike.pdf");
 
     plot p2 = plotter.new_plot();
+    p2.add_logo(false);
     p2.set_labels("#it{s}  [GeV^{2}]", "#it{f}_{1}^{1}(#it{s})");
-    p2.set_ranges({0, 0.9}, {-0.7, 1.3});
+    p2.set_ranges({0, 1}, {-0.7, 1.3});
     p2.set_legend(0.25, 0.7);
     p2.color_offset(2);
-    p2.add_curve(  {0,1},      [f1](double s){ return std::real(f1->direct_projection(1, s));} , "Real");
-    p2.add_curve(  {0,1},      [f1](double s){ return std::imag(f1->direct_projection(1, s)); }, "Imaginary");
-    p2.add_curve( {0, 0.9},    [f1](double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(f1->direct_projection(1,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
-    p2.add_curve( {STH + EPS, 1}, [](double s){ return std::real(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey, "GKPY"));
-    p2.add_curve( {STH + EPS, 1}, [](double s){ return std::imag(pipi::partial_wave(1, 1, s));}, dashed(jpacColor::DarkGrey));
-    p2.save("pw.pdf");
+    auto reF00  = p2.add_curve(  {0,1}, [f1](double s){ return std::real(f1->direct_projection(1, s));} , "Real");
+    auto imF00  = p2.add_curve(  {0,1}, [f1](double s){ return std::imag(f1->direct_projection(1, s)); }, "Imaginary");
+    auto imUni  = p2.add_curve(  {0,1}, [f1](double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(f1->direct_projection(1,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
+    auto reGKPY = p2.add_curve(  {0,1}, []  (double s){ return (s > STH) ? std::real(pipi::partial_wave(1, 1, s)) : 0.;}, dashed(jpacColor::DarkGrey, "GKPY"));
+    auto imGKPY = p2.add_curve(  {0,1}, []  (double s){ return (s > STH) ? std::imag(pipi::partial_wave(1, 1, s)) : 0.;}, dashed(jpacColor::DarkGrey));
+    p2.save("f11.pdf");
 
-    plotter.combine({2,1}, {p1, p2}, "a11.pdf");
+    auto dat = import_data<4>("data/charge_exchange.dat");
+    plot p3 = plotter.new_plot();
+    p3.add_logo(false);
+    p3.set_labels("#it{s}  [GeV^{2}]", "Re #alpha_{#rho}(#it{s})");
+    p3.set_ranges( {-1.5, 0}, {-0.7, 0.6});
+    auto reTL = p3.add_curve(  {-1.5, 0},      [alpha](double s){ return alpha->real_part(s);});
+    auto liTL = p3.add_curve(  {-1.5, 0},      [alpha](double s){ return 0.5+0.9*s; }, dashed(jpacColor::DarkGrey));
+    p3.add_data({-dat[0], dat[1]/2}, {dat[2], dat[3]});
+    p3.save("spacelike.pdf");
+
+    print_to_file<6>("fig5.txt", {"s", "ReF00", "ImF00", "Ex_Uni", "ReGKPY", "ImGKPY"}, {reF00[0], reF00[1], imF00[1], imUni[1], reGKPY[1], imGKPY[1]});
+    print_to_file<4>("fig6.txt", {"s", "ReAlpha", "ImAlpha", "Linear"}, {reAlp[0], reAlp[1], imAlp[1], Lin[1]});
+    print_to_file<3>("fig7.txt", {"s", "ReAlpha", "Linear"}, {reTL[0], reTL[1], liTL[1]});
 };

@@ -174,7 +174,7 @@ namespace analyticRT
     };
 
     // Take in a lambda an evaluation range to get the vectors
-    void plot::add_curve(std::array<double,2> bounds, std::function<double(double)> F, entry_style style)
+    std::array<std::vector<double>,2> plot::add_curve(std::array<double,2> bounds, std::function<double(double)> F, entry_style style)
     {
         double step = (bounds[1] - bounds[0]) / double(_Npoints);
 
@@ -192,9 +192,11 @@ namespace analyticRT
         };
 
         add_curve(x, fx, style);
+
+        return std::array<std::vector<double>,2>({x, fx});
     };
 
-    void plot::add_curve(std::array<double,2> bounds, std::function<double(double)> F, std::string id)
+    std::array<std::vector<double>,2> plot::add_curve(std::array<double,2> bounds, std::function<double(double)> F, std::string id)
     {
         _Ncurve++;
         entry_style style;
@@ -203,7 +205,7 @@ namespace analyticRT
         style._label = id;
         style._add_to_legend = (id != "");
 
-        add_curve(bounds, F, style);
+        return add_curve(bounds, F, style);
     };
     
     void plot::add_dashed(std::vector<double> x, std::vector<double> fx)
@@ -217,7 +219,7 @@ namespace analyticRT
         _entries.push_back(plot_entry(g, style, false));
     };
 
-    void plot::add_dashed(std::array<double,2> bounds, std::function<double(double)> F)
+     std::array<std::vector<double>,2> plot::add_dashed(std::array<double,2> bounds, std::function<double(double)> F)
     {
         double step = (bounds[1] - bounds[0]) / double(_Npoints);
 
@@ -234,6 +236,7 @@ namespace analyticRT
         };
 
         add_dashed(x, fx);
+        return std::array<std::vector<double>,2>({x, fx});
     };
 
     // -----------------------------------------------------------------------

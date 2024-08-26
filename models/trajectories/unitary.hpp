@@ -47,8 +47,8 @@ namespace analyticRT
                                && (exponent > 0)                         // exponent is positive
                                && (_c*pow(q2hat, exponent) >= 10*beta);  // _c is not too small
 
-            if (to_simplify) return gamma*(exponent*log(q2hat) + log(_c/gamma));
-            return rho*gamma*log(1. + 1./gamma*(beta + _c*pow(q2hat, exponent)));        
+            if (to_simplify) return gamma*(exponent*log(q2hat) + log(_c*rho/gamma));
+            return gamma*log(1. + rho/gamma*(beta + _c*pow(q2hat, exponent)));        
         };
         
         static const int kDefault        = 0;

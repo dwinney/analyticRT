@@ -47,10 +47,10 @@ namespace analyticRT
         };
 
         // Adjust the matching points and parameters involved in the interpolation
-        inline void set_interp_pars(int N, std::array<double,2> pars)
+        inline void set_interp_pars(int N, std::array<double,2> pars, bool reset = true)
         {
             _Ninterp = N; _s1 = pars[0]; _sAsym = pars[1];
-            this->initialize();
+            if (reset) this->initialize();
         };
         
         // Evaluate the last saved iteration of the real part

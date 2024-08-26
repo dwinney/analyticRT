@@ -104,6 +104,27 @@ namespace analyticRT
     // ---------------------------------------------------------------------------
     // Print N columns of data to file
     // We assume theyre all the same size, if not this breaks and its not our fault
+
+    template<int N>
+    inline void print_to_file(std::string outname, std::array<std::vector<double>,N> data)
+    {
+        std::ofstream out;
+        out.open(outname);
+
+        for (int j = 0; j < data[0].size(); j++)
+        {
+            out << std::left;
+            for (int i = 0; i < N; i++)
+            {
+                out << std::setw(PRINT_SPACING) << data[i][j];
+            }
+            out << std::endl;
+        };
+
+        out.close();
+        return;
+    };
+
     template<int N>
     inline void print_to_file(std::string outname, std::array<std::string,N> headers, std::array<std::vector<double>,N> data)
     {

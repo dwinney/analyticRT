@@ -65,6 +65,16 @@ namespace analyticRT
         return dashed;
     };
 
+    inline entry_style dotted(jpacColor color, std::string id = "")
+    {
+        entry_style dotted;
+        dotted._color = color;
+        dotted._style = kDotted;
+        dotted._label = id;
+        dotted._add_to_legend = (dotted._label != "");
+        return dotted;
+    };
+
     enum curve_type { 
                       sigma_s,      sigma_w,      sigma_Egam,       // Integrated cross-sections as functions of s, W, and Egam
                       dsigmadt_s,   dsigmadt_w,   dsigmadt_Egam,    // Differential x-sections as function of t at fixed s, W, Egam

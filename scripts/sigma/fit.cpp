@@ -84,7 +84,6 @@ void fit()
     plotter plotter;
 
     plot p1 = plotter.new_plot();
-    p1.add_logo(false);
     p1.set_labels("#it{s}  [GeV^{2}]", "#it{f}^{0}_{0}(#it{s})");
     p1.color_offset(2);
     p1.set_legend(0.25, 0.7);
@@ -92,16 +91,15 @@ void fit()
     auto reF00 = p1.add_curve( {0, 0.9}, [f0]( double s){ return std::real(f0->direct_projection(0, s)); }, "Real");
     auto imF00 = p1.add_curve( {0, 0.9}, [f0]( double s){ return std::imag(f0->direct_projection(0, s)); }, "Imaginary");
     auto Unita = p1.add_curve( {0, 0.9}, [f0]( double s){ return (s > STH) ? sqrt(1.- STH/s) * std::norm(f0->direct_projection(0,s)) : 0; }, dashed(jpacColor::Orange, "Exact Unitarity"));
-    auto reGKPY= p1.add_curve( {0, 0.9}, []  ( double s){ return (s > STH) ? std::real(pipi::partial_wave(0, 0, s)) : 0;}, dashed(jpacColor::DarkGrey, "GKPY"));
-    auto imGKPY= p1.add_curve( {0, 0.9}, []  ( double s){ return (s > STH) ? std::imag(pipi::partial_wave(0, 0, s)) : 0;}, dashed(jpacColor::DarkGrey        ));
+    auto reGKPY= p1.add_curve( {STH+EPS, 0.9}, []  ( double s){ return (s > STH) ? std::real(pipi::partial_wave(0, 0, s)) : 0;}, dotted(jpacColor::DarkGrey, "GKPY"));
+    auto imGKPY= p1.add_curve( {STH+EPS, 0.9}, []  ( double s){ return (s > STH) ? std::imag(pipi::partial_wave(0, 0, s)) : 0;}, dotted(jpacColor::DarkGrey        ));
     p1.save("a00_PW.pdf");
 
     plot p2 = plotter.new_plot();
-    p2.add_logo(false);
     p2.set_labels("#it{s}  [GeV^{2}]", "#alpha_{#sigma}(#it{s})");
     p2.set_ranges({-0.2, 1.5}, {-0.09, 0.12});
     p2.set_legend(0.67, 0.53);
-    p2.set_legend_spacing(0.02);
+    p2.set_legend_spacing(0.023);
     p2.shade_region({STH, 0.5});
     p2.add_vertical(  0, {kBlack, kSolid});
     p2.add_horizontal(0, {kBlack, kSolid}); 
@@ -109,6 +107,7 @@ void fit()
     p2.add_dashed( jrp_curves[0], jrp_curves[1]);
     auto imAlp = p2.add_curve( {-0.2,  1.5}, [alpha](double s){ return alpha->imaginary_part(s); },         "Imaginary");
     p2.add_dashed( jrp_curves[0], jrp_curves[2]);
+    p2.add_curve(  {-0.2, 1.5},      [alpha](double s){ return alpha->real_part(0)+0.9*s; }, dotted(jpacColor::DarkGrey, "#alpha_{#sigma}(0) + 0.9 #it{s}"));
     p2.add_data({std::vector<double>({0.5*0.5}),{}}, {std::vector<double>({0.}), {}}, jpacColor::DarkGrey);
     p2.save("alpha_sigma.pdf");
 

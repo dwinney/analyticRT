@@ -87,7 +87,6 @@ void fit()
     data_set as   = a_spectrum();
 
     plot p1 = plotter.new_plot();
-    p1.add_logo(false);
     p1.set_labels("#it{s}  [GeV^{2}]", "#alpha_{#rho}(#it{s})");
     p1.set_ranges({-0.2, 1.5}, {0., 2.0});
     p1.set_legend(0.4, 0.7);
@@ -100,7 +99,6 @@ void fit()
     p1.save("timelike.pdf");
 
     plot p2 = plotter.new_plot();
-    p2.add_logo(false);
     p2.set_labels("#it{s}  [GeV^{2}]", "#it{f}_{1}^{1}(#it{s})");
     p2.set_ranges({0, 1}, {-0.7, 1.3});
     p2.set_legend(0.25, 0.7);
@@ -114,7 +112,6 @@ void fit()
 
     auto dat = import_data<4>("data/charge_exchange.dat");
     plot p3 = plotter.new_plot();
-    p3.add_logo(false);
     p3.set_labels("#it{s}  [GeV^{2}]", "Re #alpha_{#rho}(#it{s})");
     p3.set_ranges( {-1.5, 0}, {-0.7, 0.6});
     auto reTL = p3.add_curve(  {-1.5, 0},      [alpha](double s){ return alpha->real_part(s);});

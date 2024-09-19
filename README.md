@@ -3,7 +3,7 @@ Models for Regge trajectories and scattering amplitudes which satisfy S-matrix c
 
 Compilation of the base library requires only [ROOT](https://root.cern.ch/) (tested with version 6.17 and 6.24) with [*MathMore*](https://root.cern.ch/mathmore-library) and [Boost C++](https://www.boost.org/) (version $\geq$ 1.68) libraries.
 
-##  INSTALLATION
+###  INSTALLATION
 To install clone normally and use:
 ```bash
 cd analyticRT
@@ -21,10 +21,20 @@ setenv ANALYTICRT /path/to/analyticRT # for csh
 ```
 
 
-##  USAGE
+###  USAGE
+
+Scripts to reproduce all plots and results from [[1]](#references) are provided in the `/scripts` directory. 
 
 To run a script use the executable described above which mimics a Python-like environment without requiring recompilation when changes are made to model files:
 ```bash
 analyticRT my_script.cpp
 ```
 or add the bin directory to $PATH to call `analyticRT` from any directory. 
+
+### REFERENCES
++ [1] [Towards a unified description of hadron scattering at all energies](https://www.youtube.com/watch?v=-esylyJaMzc).
+
+
+<p align="center">
+  <img width="275" src="./doc/JPAClogo.png">
+</p>

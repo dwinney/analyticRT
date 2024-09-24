@@ -32,7 +32,7 @@ analyticRT my_script.cpp
 or add the bin directory to $PATH to call `analyticRT` from any directory. 
 
 ### REFERENCES
-+ [1] [Towards a unified description of hadron scattering at all energies](https://www.youtube.com/watch?v=-esylyJaMzc).
++ [1] [Towards a unified description of hadron scattering at all energies](https://arxiv.org/abs/2409.09172).
 
 
 <p align="center">
